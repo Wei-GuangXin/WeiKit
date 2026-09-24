@@ -1,0 +1,31 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35825.156
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeiKit", "..\WeiKit.csproj", "{5AC4CE3B-B6BF-4784-88F8-EE4E3773C8AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeiKit.Demo", "Demo.csproj", "{7B1E2C44-9A3D-4F51-8E27-6C5D9A1B4E70}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5AC4CE3B-B6BF-4784-88F8-EE4E3773C8AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AC4CE3B-B6BF-4784-88F8-EE4E3773C8AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AC4CE3B-B6BF-4784-88F8-EE4E3773C8AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AC4CE3B-B6BF-4784-88F8-EE4E3773C8AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B1E2C44-9A3D-4F51-8E27-6C5D9A1B4E70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B1E2C44-9A3D-4F51-8E27-6C5D9A1B4E70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B1E2C44-9A3D-4F51-8E27-6C5D9A1B4E70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B1E2C44-9A3D-4F51-8E27-6C5D9A1B4E70}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3D7B91A2-5E64-4C08-9F31-2A8B6D4E7C15}
+	EndGlobalSection
+EndGlobal
