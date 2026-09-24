@@ -43,7 +43,7 @@
 | `DingDingAPI` | 钉钉自定义机器人消息推送（markdown） |
 | `SakuraFrpcAPI` | 樱花 Frp 内网穿透接口封装 |
 | `ProgTool` | 机器码生成、管理员运行/重启、编译时间、ClickOnce 卸载等 |
-| `Tool` | 工具集合：开机自启、路径转换、控件圆角、动画、SHA256、安全跨线程调用等 |
+| `Tool` | 工具集合：开机自启、路径转换、控件圆角、动画、SHA256、安全跨线程调用、`WindowZoomer` 窗口控件缩放、`DataFlowList` 定长滑动窗口统计等 |
 | `States` | 计数与统计字段的自动维护 |
 | `Comp.*` | 自绘控件：`Switch` / `Led` / `Chart` / `ProgressBar` / `ProgressRing` / `Panels` |
 | `Window.*` | 内置窗口：配置管理窗口 `ConfigManag`、日志窗口 `Logsinfo` |
@@ -62,7 +62,7 @@ WeiKit-light/
 ├── Comp/          # 自绘控件（Chart / Led / Panels / ProgressBar / ProgressRing / Switch）
 ├── Window/        # 内置窗口（ConfigManag / Logsinfo）
 ├── Resources/     # 界面图标资源
-├── demo/          # 可直接运行的示例程序 WeiKit.Demo（含 87 项冒烟自检）
+├── demo/          # 可直接运行的示例程序 WeiKit.Demo
 ├── doc/           # 使用文档（HTML）
 ├── Configs.cs     # 配置管理
 ├── Logs.cs        # 日志
@@ -99,6 +99,21 @@ Logs.Println("Hello WeiKit");
 ```
 
 完整推荐初始化顺序与各模块用法，请参考 `demo/Program.cs` 与 `demo/` 下各示例页。
+
+### 窗口控件缩放（`Tool.WindowZoomer`）
+
+窗口尺寸变化时，按比例同步缩放内部所有控件的大小与位置，可选同时缩放字体。在目标窗口的 `Load` 事件中创建实例即可：
+
+```csharp
+// 在窗口类内部声明
+private Tool.WindowZoomer _zoomer;
+
+private void MainForm_Load(object sender, EventArgs e)
+{
+    // 第二个参数：是否同时缩放字体（默认 true）
+    _zoomer = new Tool.WindowZoomer(this, fontzoomer: true);
+}
+```
 
 ## 许可（License）
 
