@@ -126,6 +126,13 @@
     <Compile Include="Window\Logsinfo.Designer.cs">
       <DependentUpon>Logsinfo.cs</DependentUpon>
     </Compile>
+    <Compile Include="Window\WMessageBoxBase.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Window\WMessageBoxBase.Designer.cs">
+      <DependentUpon>WMessageBoxBase.cs</DependentUpon>
+    </Compile>
+    <Compile Include="WMessageBox.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -160,6 +167,9 @@
     <EmbeddedResource Include="Window\Logsinfo.resx">
       <DependentUpon>Logsinfo.cs</DependentUpon>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Window\WMessageBoxBase.resx">
+      <DependentUpon>WMessageBoxBase.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -61,6 +61,9 @@
     <Compile Include="CompDemo.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="WMessageBoxDemo.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WeiKit.csproj">

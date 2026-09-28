@@ -26,8 +26,10 @@ namespace WeiKit.Demo
 			MinimumSize = new Size(900, 620);
 			Font = Ui.BaseFont;
 
-			BuildMenu();
+			// 注意添加顺序：Dock=Fill 的 TabControl 必须先加入，再添加 Top/Bottom 的
+			// MenuStrip/StatusStrip，否则 Fill 控件会覆盖它们（标签页标题会被菜单栏遮住）。
 			BuildTabs();
+			BuildMenu();
 			BuildStatus();
 
 			// 配置里保存的「窗口置顶」立即生效
@@ -96,6 +98,8 @@ namespace WeiKit.Demo
 
 			tabs.TabPages.Add(WrapTab("⑤ 自绘控件", new CompDemo().Build()));
 
+			tabs.TabPages.Add(WrapTab("⑥ 消息框", new WMessageBoxDemo().Build()));
+
 			tabs.TabPages.Add(BuildAboutTab());
 
 			Controls.Add(tabs);
@@ -134,6 +138,7 @@ namespace WeiKit.Demo
 			Ui.AddRow(grid, "③ 程序工具", "机器码、编译时间、文件 SHA256、随机串、路径转换、注册表自启动、DataFlowList 统计");
 			Ui.AddRow(grid, "④ 网络", "GET/POST、图片下载、多线程下载器（带进度）、multipart 上传、内置 WebServer、钉钉机器人");
 			Ui.AddRow(grid, "⑤ 自绘控件", "Switch / Led / Chart / ProgressBar / ProgressRing / Panels 六个控件实时演示");
+			Ui.AddRow(grid, "⑥ 消息框", "WMessageBox 普通/动态/图片消息框 + 文本/开关/数字/日期/颜色/文件等输入询问框");
 			content.Controls.Add(grid);
 
 			Ui.AddHeader(content, "快捷入口");
@@ -183,6 +188,7 @@ namespace WeiKit.Demo
 			Ui.AddRow(g2, "程序", "ProgTool.IsRunAsAdmin / RunAsAdmin / ProgramRestart / GenerateMachineCode / GetBuildTime / UninstallClickOnce");
 			Ui.AddRow(g2, "网络", "HttpLink.GetTask / PostTask / GetImageFromUrl / GetClientIP、DownTool、UploadTool、WebServer、DingDingAPI");
 			Ui.AddRow(g2, "控件", "Comp.Switch / Led / Chart / ProgressBar / ProgressRing / Panels");
+			Ui.AddRow(g2, "消息框", "WMessageBox.Show / ShowInfo / ShowSuccess / ShowWarning / ShowError / ShowQuestion / ShowDynamic / ShowImage / AskText / AskSwitch / AskNumber / AskDate / AskTime / AskDateTime / AskColor / AskFile / AskFolder / AskPath");
 			content.Controls.Add(g2);
 
 			Ui.AddHeader(content, "已知限制（仍建议遵守）");

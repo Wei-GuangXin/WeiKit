@@ -62,21 +62,17 @@ namespace WeiKit.Demo
 			};
 		}
 
-		/// <summary>灰色说明文字（自动换行）</summary>
+		/// <summary>灰色说明文字（自动换行，高度随内容自适应）</summary>
 		public static Label Hint(string text, int width = 920)
 		{
-			var lb = new Label
+			return new Label
 			{
 				Text = text,
 				ForeColor = Muted,
-				AutoSize = false,
-				Width = width,
+				AutoSize = true,
+				MaximumSize = new Size(width, 0),
 				Margin = new Padding(0, 0, 0, 8)
 			};
-			// 依据文本长度估算高度，避免被截断
-			int lines = Math.Max(1, (text.Length / Math.Max(1, width / 8)) + text.Split('\n').Length);
-			lb.Height = Math.Min(lines, 14) * 20 + 6;
-			return lb;
 		}
 
 		/// <summary>普通标签</summary>
@@ -207,23 +203,40 @@ namespace WeiKit.Demo
 		/// <summary>带标题的分组框，返回内部竖向容器</summary>
 		public static FlowLayoutPanel Group(FlowLayoutPanel parent, string title, int width = 940)
 		{
-			var box = new GroupBox
+			// GroupBox 的 AutoSize 对 Dock 子控件高度计算不可靠（WinForms 已知问题），
+			// 这里改用 FlowLayoutPanel 模拟分组框：标题 Label + 带边框的内容容器，高度完全由内容驱动。
+			// AutoSizeMode 用 GrowOnly，保证宽度不小于 width，高度随内容增长。
+			var box = new FlowLayoutPanel
+			{
+				FlowDirection = FlowDirection.TopDown,
+				WrapContents = false,
+				AutoSize = true,
+				AutoSizeMode = AutoSizeMode.GrowOnly,
+				Width = width,
+				BackColor = SystemColors.Control,
+				Margin = new Padding(0, 6, 0, 10)
+			};
+
+			var titleLbl = new Label
 			{
 				Text = title,
-				Width = width,
 				AutoSize = true,
-				AutoSizeMode = AutoSizeMode.GrowAndShrink,
-				Padding = new Padding(10, 8, 10, 10),
-				Margin = new Padding(0, 6, 0, 10),
-				Font = new Font(BaseFont, FontStyle.Bold)
+				Font = new Font(BaseFont, FontStyle.Bold),
+				ForeColor = Accent,
+				Margin = new Padding(0, 0, 0, 4)
 			};
+			box.Controls.Add(titleLbl);
+
 			var inner = new FlowLayoutPanel
 			{
 				FlowDirection = FlowDirection.TopDown,
-				AutoSize = true,
-				AutoSizeMode = AutoSizeMode.GrowAndShrink,
 				WrapContents = false,
-				Dock = DockStyle.Top,
+				AutoSize = true,
+				AutoSizeMode = AutoSizeMode.GrowOnly,
+				Width = width,
+				BorderStyle = BorderStyle.FixedSingle,
+				Padding = new Padding(10, 8, 10, 10),
+				BackColor = Color.White,
 				Font = BaseFont
 			};
 			box.Controls.Add(inner);
