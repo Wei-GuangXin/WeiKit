@@ -17,9 +17,10 @@ namespace WeiKit.Window
 		/// </summary>
 		public Logs logs;
 		/// <summary>
-		/// 控制台日志主题风格
+		/// 控制台日志主题名（对应主题目录中不含扩展名的文件名）。
+		/// 默认从持久化存储恢复，无记录时为 LightClean。
 		/// </summary>
-		public ConsoleLogTheme.ThemeType ThemeType { get; set; } = ConsoleLogTheme.ThemeType.LightClean;
+		public string ThemeName { get; set; } = ConsoleLogTheme.LoadCurrentTheme();
 
 		// 敏感信息屏蔽相关字段
 		private bool _sensitiveInfoEnabled = false;
@@ -245,16 +246,19 @@ namespace WeiKit.Window
 					try
 					{
 						await webView21.EnsureCoreWebView2Async(null);
-						webView21.NavigateToString(ConsoleLogTheme.GetHtmlHeader(ThemeType) + code + codeb);
+						webView21.NavigateToString(ConsoleLogTheme.GetHtmlHeader(ThemeName) + code + codeb);
 						panel3.Visible = false;
 
-						//主题选择
+						// 从主题目录加载主题列表，并选中持久化的当前主题
 						comboBox1.Items.Clear();
-						foreach (var theme in Enum.GetValues(typeof(ConsoleLogTheme.ThemeType)))
+						foreach (var theme in ConsoleLogTheme.GetThemeNames())
 						{
-							comboBox1.Items.Add(theme.ToString());
+							comboBox1.Items.Add(theme);
 						}
-						comboBox1.SelectedIndex = 2;
+						int idx = comboBox1.Items.IndexOf(ThemeName);
+						comboBox1.SelectedIndex = idx >= 0 ? idx : (comboBox1.Items.Count > 0 ? 0 : -1);
+						if (comboBox1.SelectedIndex >= 0)
+							ThemeName = comboBox1.SelectedItem.ToString();
 					}
 					catch (Exception ex)
 					{
@@ -278,7 +282,7 @@ namespace WeiKit.Window
 		}
 
 		/// <summary>
-		/// 触发一次日志内容重绘。修改 <see cref="ThemeType"/>、<see cref="AutoColorMode"/>
+		/// 触发一次日志内容重绘。修改 <see cref="ThemeName"/>、<see cref="AutoColorMode"/>
 		/// 或从外部批量改动日志后调用即可让窗口按新设置刷新。
 		/// （库内部的 LogAddEvent 也走同一路径刷新。）
 		/// </summary>
@@ -297,18 +301,18 @@ namespace WeiKit.Window
 			Tool.SafeInvoke(this, () =>
 			{
 				if (webView21 != null && webView21.Visible)
-				{
-					webView21.NavigateToString(ConsoleLogTheme.GetHtmlHeader(ThemeType) + code + codeb);
-					//判断是否有焦点
-					if (!webView21.Focused)
-						//没有焦点则自动滚动到最底部
-						webView21.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, document.body.scrollHeight);");
-				}
-				//兼容模式
-				if (webBrowser1 != null && webBrowser1.Visible)
-				{
-					webBrowser1.DocumentText = ConsoleLogTheme.GetHtmlHeader(ThemeType) + code + codeb;
-				}
+			{
+				webView21.NavigateToString(ConsoleLogTheme.GetHtmlHeader(ThemeName) + code + codeb);
+				//判断是否有焦点
+				if (!webView21.Focused)
+					//没有焦点则自动滚动到最底部
+					webView21.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, document.body.scrollHeight);");
+			}
+			//兼容模式
+			if (webBrowser1 != null && webBrowser1.Visible)
+			{
+				webBrowser1.DocumentText = ConsoleLogTheme.GetHtmlHeader(ThemeName) + code + codeb;
+			}
 			});
 		}
 
@@ -329,7 +333,7 @@ namespace WeiKit.Window
 			{
 				code = code + LogToHtml(log);
 			}
-			webBrowser1.DocumentText = ConsoleLogTheme.GetHtmlHeader(ThemeType) + code + codeb;
+			webBrowser1.DocumentText = ConsoleLogTheme.GetHtmlHeader(ThemeName) + code + codeb;
 		}
 
 		private bool MenuVisible = false;
@@ -362,8 +366,10 @@ namespace WeiKit.Window
 
 		private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
 		{
-			//更新主题
-			ThemeType = (ConsoleLogTheme.ThemeType)Enum.Parse(typeof(ConsoleLogTheme.ThemeType), comboBox1.SelectedItem.ToString());
+			if (comboBox1.SelectedItem == null) return;
+			//更新主题并持久化
+			ThemeName = comboBox1.SelectedItem.ToString();
+			ConsoleLogTheme.SaveCurrentTheme(ThemeName);
 			RefreshContent();
 		}
 
@@ -505,15 +511,15 @@ namespace WeiKit.Window
 				Tool.SafeInvoke(this, () =>
 				{
 					if (webView21 != null && webView21.Visible)
-					{
-						webView21.NavigateToString(ConsoleLogTheme.GetHtmlHeader(ThemeType) + code + codeb);
-						if (!webView21.Focused)
-							webView21.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, document.body.scrollHeight);");
-					}
-					if (webBrowser1 != null && webBrowser1.Visible)
-					{
-						webBrowser1.DocumentText = ConsoleLogTheme.GetHtmlHeader(ThemeType) + code + codeb;
-					}
+				{
+					webView21.NavigateToString(ConsoleLogTheme.GetHtmlHeader(ThemeName) + code + codeb);
+					if (!webView21.Focused)
+						webView21.CoreWebView2.ExecuteScriptAsync("window.scrollTo(0, document.body.scrollHeight);");
+				}
+				if (webBrowser1 != null && webBrowser1.Visible)
+				{
+					webBrowser1.DocumentText = ConsoleLogTheme.GetHtmlHeader(ThemeName) + code + codeb;
+				}
 				});
 			}
 		}

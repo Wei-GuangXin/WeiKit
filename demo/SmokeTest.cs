@@ -645,14 +645,14 @@ namespace WeiKit.Demo
 				WriteLine($"        事件触发 {events} 次（应 1）；自身日志 {mine} 条（应 1）；RedirectConsoleOut 横幅 {banner} 条；由回调递归产生的日志 {recursive} 条（应 0）");
 				return events == 1 && mine == 1 && recursive == 0;
 			});
-			Check("ConsoleLogTheme 13 个主题都有 HTML", () =>
+			Check("ConsoleLogTheme 13 个内置主题都有 HTML", () =>
 			{
-				var values = (ConsoleLogTheme.ThemeType[])Enum.GetValues(typeof(ConsoleLogTheme.ThemeType));
-				WriteLine($"        主题数量 = {values.Length}");
-				if (values.Length != 13) return false;
-				foreach (var t in values)
+				var names = ConsoleLogTheme.GetThemeNames();
+				WriteLine($"        主题数量 = {names.Count}");
+				if (names.Count < 13) return false;
+				foreach (var name in names)
 				{
-					string html = ConsoleLogTheme.GetHtmlHeader(t);
+					string html = ConsoleLogTheme.GetHtmlHeader(name);
 					if (string.IsNullOrWhiteSpace(html) || !html.Contains(".e")) return false;
 				}
 				return true;

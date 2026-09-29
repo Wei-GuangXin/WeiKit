@@ -39,7 +39,7 @@ cd demo\bin\Debug
 
 ## 二、界面结构
 
-主窗体用 `TabControl` 分成 7 页，每页对应一个模块；底部状态栏实时显示配置路径与日志条数。
+主窗体用 `TabControl` 分成 8 页（首页 + 六个功能页 + 关于），每页对应一个模块；底部状态栏实时显示配置路径与日志条数。
 
 | 标签页 | 演示内容 |
 |---|---|
@@ -49,6 +49,7 @@ cd demo\bin\Debug
 | **③ 程序工具** | 机器码、编译时间、文件 SHA256、随机串、`RunCmdCode`、路径转换、随机目录、注册表自启动、`DataFlowList` 统计与两种异常演示 |
 | **④ 网络** | GET/POST、图片下载、`DownTool`（含进度/速度/剩余、模式选择、取消、大小探测）、`UploadTool`、内置 `WebServer`（软页面 + 访问日志）、钉钉机器人 |
 | **⑤ 自绘控件** | `Switch` / `Led` / `Chart`（实时动画曲线）/ `ProgressBar`（含越界演示）/ `ProgressRing` / `Panels`（与普通 Panel 对照） |
+| **⑥ 消息框** | 普通/动态/图片消息框、`ShowToast` 边缘滑入的定时提示框（支持屏幕或窗口内定位），以及文本/开关/数字/日期/时间/颜色/文件/文件夹/路径等输入询问框 |
 | **关于** | 库信息、API 速查、Demo 中已规避的陷阱清单 |
 
 菜单栏还提供：打开程序/工作目录、日志与配置窗口、窗口置顶、管理员重启、重启程序、导出日志。
@@ -66,6 +67,10 @@ cd demo\bin\Debug
 | `downloaded.bin` | 下载器默认保存位置 | `HttpLink.DownTool` |
 
 配置文件路径 = `Tool.GetProgramPath() + "DemoData\demo.config"`，加密密钥在 `Program.ConfigSaveKey`。
+
+> 日志窗口主题存放在 `<exe目录>\themes\` 下（每个主题一个 `.html` 文件，文件名即主题名），
+> 首次打开日志窗口时自动生成 13 个内置主题；用户可直接新增/编辑/删除文件来自定义，
+> 当前选中的主题名会持久化到 `themes\current.theme`。
 
 ## 四、初始化流程（`Program.cs`）
 
@@ -162,6 +167,7 @@ static void Main(string[] args)
 | `ToolDemo.cs` | ③ 程序工具页 |
 | `NetDemo.cs` | ④ 网络页 |
 | `CompDemo.cs` | ⑤ 自绘控件页 |
+| `WMessageBoxDemo.cs` | ⑥ 消息框页（普通/动态/图片消息框、Toast、各类输入询问框） |
 | `SmokeTest.cs` | 无界面自检（87 项断言） |
 
 > 注意：每个 Demo 页都是「普通类 + `Build()` 返回 `Control`」，不是 `UserControl` 子类，

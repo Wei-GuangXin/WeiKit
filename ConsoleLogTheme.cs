@@ -1,114 +1,159 @@
-﻿/**
- *  控制台日志主题风格定义，存储不同风格的 HTML 头部代码。
+/**
+ *  控制台日志主题风格定义。
+ *  主题以「目录 + HTML 文件」的形式存在：每个主题是主题目录下的一个 .html 文件，
+ *  文件名（不含扩展名）即主题名。内置主题会在首次访问时自动生成到目录中，
+ *  用户可直接新增、编辑、删除主题文件来定制；当前选中的主题名会持久化保存。
  * **/
+using System;
+using System.Collections.Generic;
+using System.IO;
+
 namespace WeiKit
 {
 	public static class ConsoleLogTheme
 	{
-		public enum ThemeType
+		/// <summary>
+		/// 主题目录。默认位于程序目录下的 <c>themes</c> 文件夹，可自行修改。
+		/// </summary>
+		public static string ThemeDirectory = Path.Combine(Tool.GetProgramPath(), "themes");
+
+		/// <summary>
+		/// 记录当前选中主题名的持久化文件名（位于主题目录内）。
+		/// </summary>
+		private const string CurrentThemeFile = "current.theme";
+
+		/// <summary>
+		/// 内置主题（主题名 → 生成 HTML 头部的委托）。作为首次运行时的种子主题，
+		/// 会被写入主题目录；之后以目录中的文件为准。
+		/// </summary>
+		private static readonly Dictionary<string, Func<string>> BuiltInThemes =
+			new Dictionary<string, Func<string>>(StringComparer.OrdinalIgnoreCase)
+			{
+				{ "ClassicGreen", GetClassicGreenTheme },
+				{ "ModernDark", GetModernDarkTheme },
+				{ "LightClean", GetLightCleanTheme },
+				{ "SciFiConsole", GetSciFiConsoleTheme },
+				{ "HighContrastAlert", GetHighContrastAlertTheme },
+				{ "HackerMatrix", GetHackerMatrixTheme },
+				{ "NeonCyber", GetNeonCyberTheme },
+				{ "WarmPaper", GetWarmPaperTheme },
+				{ "DeepSpace", GetDeepSpaceTheme },
+				{ "ProfessionalBlue", GetProfessionalBlueTheme },
+				{ "RainbowColor", GetRainbowColorTheme },
+				{ "GlassMorphism", GetGlassMorphismTheme },
+				{ "VintageCRT", GetVintageCRTTheme }
+			};
+
+		private static bool _themesEnsured;
+
+		/// <summary>
+		/// 确保主题目录存在，并把缺失的内置主题写入目录（已存在的文件不会被覆盖）。
+		/// </summary>
+		public static void EnsureThemes()
 		{
-			/// <summary>
-			/// 经典绿屏终端风（复古命令行）
-			/// </summary>
-			ClassicGreen,
+			if (_themesEnsured) return;
+			_themesEnsured = true;
 
-			/// <summary>
-			/// 现代暗黑风（平滑简洁）
-			/// </summary>
-			ModernDark,
+			try
+			{
+				if (!Directory.Exists(ThemeDirectory))
+					Directory.CreateDirectory(ThemeDirectory);
 
-			/// <summary>
-			/// 明亮简洁风（适合打印或浅色环境）
-			/// </summary>
-			LightClean,
-
-			SciFiConsole,
-
-			/// <summary>
-			/// 高对比警报风（强调错误与警告）
-			/// </summary>
-			HighContrastAlert,
-
-			/// <summary>
-			/// 黑客矩阵风（动态背景 + 动画效果）
-			/// </summary>
-			HackerMatrix,
-
-			/// <summary>
-			/// 霓虹赛博风（霓虹光效，未来科技感）
-			/// </summary>
-			NeonCyber,
-
-			/// <summary>
-			/// 暖色纸质感（类似纸张和墨水）
-			/// </summary>
-			WarmPaper,
-
-			/// <summary>
-			/// 深空宇宙风（星空背景，柔和渐变）
-			/// </summary>
-			DeepSpace,
-
-			/// <summary>
-			/// 简约专业蓝（现代企业风格）
-			/// </summary>
-			ProfessionalBlue,
-
-			/// <summary>
-			/// 多彩彩虹风（每个日志级别不同彩虹色）
-			/// </summary>
-			RainbowColor,
-
-			/// <summary>
-			/// 玻璃拟态风（毛玻璃透明效果）
-			/// </summary>
-			GlassMorphism,
-
-			/// <summary>
-			/// 复古CRT显示器（扫描线，弯曲边缘）
-			/// </summary>
-			VintageCRT
+				foreach (var kv in BuiltInThemes)
+				{
+					string file = Path.Combine(ThemeDirectory, kv.Key + ".html");
+					if (!File.Exists(file))
+						File.WriteAllText(file, kv.Value());
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"初始化日志主题目录失败：{ex.Message}");
+			}
 		}
 
 		/// <summary>
-		/// 获取指定主题类型的 HTML 头部代码（包含样式定义）
+		/// 获取主题目录下所有可用的主题名（按文件名排序，不含扩展名）。
 		/// </summary>
-		/// <param name="theme">主题类型</param>
-		/// <returns>HTML 字符串</returns>
-		public static string GetHtmlHeader(ThemeType theme)
+		public static List<string> GetThemeNames()
 		{
-			switch (theme)
+			EnsureThemes();
+			var names = new List<string>();
+			try
 			{
-				case ThemeType.ClassicGreen:
-					return GetClassicGreenTheme();
-				case ThemeType.ModernDark:
-					return GetModernDarkTheme();
-				case ThemeType.LightClean:
-					return GetLightCleanTheme();
-				case ThemeType.SciFiConsole:
-					return GetSciFiConsoleTheme();
-				case ThemeType.HighContrastAlert:
-					return GetHighContrastAlertTheme();
-				case ThemeType.HackerMatrix:
-					return GetHackerMatrixTheme();
-				case ThemeType.NeonCyber:
-					return GetNeonCyberTheme();
-				case ThemeType.WarmPaper:
-					return GetWarmPaperTheme();
-				case ThemeType.DeepSpace:
-					return GetDeepSpaceTheme();
-				case ThemeType.ProfessionalBlue:
-					return GetProfessionalBlueTheme();
-				case ThemeType.RainbowColor:
-					return GetRainbowColorTheme();
-				case ThemeType.GlassMorphism:
-					return GetGlassMorphismTheme();
-				case ThemeType.VintageCRT:
-					return GetVintageCRTTheme();
-				default:
-					return GetModernDarkTheme();
+				foreach (string file in Directory.GetFiles(ThemeDirectory, "*.html"))
+					names.Add(Path.GetFileNameWithoutExtension(file));
+				names.Sort(StringComparer.OrdinalIgnoreCase);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"枚举日志主题失败：{ex.Message}");
+			}
+			return names;
+		}
+
+		/// <summary>
+		/// 获取指定主题的 HTML 头部代码。优先读取主题目录中的文件，
+		/// 找不到时回退到内置主题，仍未匹配则返回 ModernDark。
+		/// </summary>
+		/// <param name="themeName">主题名（对应主题目录中不含扩展名的文件名）</param>
+		public static string GetHtmlHeader(string themeName)
+		{
+			EnsureThemes();
+
+			if (!string.IsNullOrEmpty(themeName))
+			{
+				string file = Path.Combine(ThemeDirectory, themeName + ".html");
+				if (File.Exists(file))
+					return File.ReadAllText(file);
+
+				if (BuiltInThemes.TryGetValue(themeName, out Func<string> builtin))
+					return builtin();
+			}
+
+			return GetModernDarkTheme();
+		}
+
+		/// <summary>
+		/// 持久化保存当前选中的主题名。
+		/// </summary>
+		public static void SaveCurrentTheme(string themeName)
+		{
+			EnsureThemes();
+			try
+			{
+				File.WriteAllText(Path.Combine(ThemeDirectory, CurrentThemeFile),
+					string.IsNullOrEmpty(themeName) ? "LightClean" : themeName);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"保存当前日志主题失败：{ex.Message}");
 			}
 		}
+
+		/// <summary>
+		/// 读取持久化的当前主题名；没有记录时返回 "LightClean"。
+		/// </summary>
+		public static string LoadCurrentTheme()
+		{
+			EnsureThemes();
+			try
+			{
+				string file = Path.Combine(ThemeDirectory, CurrentThemeFile);
+				if (File.Exists(file))
+				{
+					string name = File.ReadAllText(file).Trim();
+					if (!string.IsNullOrEmpty(name))
+						return name;
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"读取当前日志主题失败：{ex.Message}");
+			}
+			return "LightClean";
+		}
+
 
 		private static string GetClassicGreenTheme()
 		{

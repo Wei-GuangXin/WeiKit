@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace WeiKit.Window
@@ -55,6 +56,8 @@ namespace WeiKit.Window
 		private static readonly Color LightBg = Color.FromArgb(240, 242, 245);
 		/// <summary>正文文字色</summary>
 		private static readonly Color TextColor = Color.FromArgb(64, 64, 64);
+		/// <summary>窗体边框色（无边框窗体用 OnPaint 自绘，避免与桌面背景融为一体）</summary>
+		private static readonly Color BorderColor = Color.FromArgb(200, 202, 206);
 
 		private const int Edge = 20;
 		private const int IconSize = 40;
@@ -149,11 +152,8 @@ namespace WeiKit.Window
 			panel1.Visible = false;
 			panel1.BackColor = Color.White;
 
-			// 按钮区
-			pnlButtons = new Panel
-			{
-				BackColor = LightBg
-			};
+			// 按钮区（背景透明，浅灰底色统一由 OnPaint 按圆角路径绘制，避免直角覆盖圆角）
+			pnlButtons = new TransparentPanel();
 			this.Controls.Add(pnlButtons);
 
 			btn1 = CreateButton();
@@ -167,10 +167,9 @@ namespace WeiKit.Window
 		/// </summary>
 		private void BuildTitleBar()
 		{
-			pnlTitleBar = new Panel
+			pnlTitleBar = new TransparentPanel
 			{
 				Height = TitleBarHeight,
-				BackColor = Color.White,
 				Cursor = Cursors.SizeAll
 			};
 
@@ -193,6 +192,7 @@ namespace WeiKit.Window
 				FlatStyle = FlatStyle.Flat,
 				Font = new Font("微软雅黑", 10F),
 				ForeColor = TextColor,
+				BackColor = Color.Transparent,
 				Cursor = Cursors.Hand,
 				TabStop = false
 			};
@@ -414,7 +414,7 @@ namespace WeiKit.Window
 
 			this.ClientSize = new Size(width, totalHeight);
 
-			// 标题栏
+			// 标题栏（铺满宽度；背景由 OnPaint 绘制，这里只承载子控件）
 			pnlTitleBar.Size = new Size(width, TitleBarHeight);
 			pnlTitleBar.Location = new Point(0, 0);
 
@@ -429,17 +429,17 @@ namespace WeiKit.Window
 			panel1.Location = new Point(Edge + iconAreaWidth, TitleBarHeight + Edge + messageAreaHeight + (hasContent ? 12 : 0));
 			panel1.Size = new Size(bodyWidth, contentHeight);
 
-			// 按钮区（底部通栏，浅灰背景）
+			// 按钮区（铺满宽度；背景由 OnPaint 绘制，这里只承载按钮）
 			pnlButtons.Location = new Point(0, totalHeight - buttonBlockHeight);
 			pnlButtons.Size = new Size(width, buttonBlockHeight);
 
-			// 按钮右对齐
-			LayoutButtons(width);
+			// 按钮右对齐（基于按钮区实际宽度）
+			LayoutButtons();
 		}
 
-		private void LayoutButtons(int formWidth)
+		private void LayoutButtons()
 		{
-			int right = formWidth - Edge;
+			int right = pnlButtons.ClientSize.Width - Edge;
 			int y = (pnlButtons.Height - ButtonHeight) / 2;
 
 			// 从右往左排列可见按钮：visibleButtons 里主按钮在前，因此结果为主按钮在左、次按钮在右，
@@ -488,6 +488,60 @@ namespace WeiKit.Window
 		}
 
 		/// <summary>
+		/// 自绘窗体背景与边框。标题栏/按钮区的浅灰底色在这里统一按圆角路径绘制并裁剪，
+		/// 保证四个圆角与窗体圆角完全重合，不会出现直角边覆盖圆角导致的截断。
+		/// </summary>
+		protected override void OnPaint(PaintEventArgs e)
+		{
+			base.OnPaint(e);
+
+			Rectangle rect = ClientRectangle;
+			rect.Width -= 1;
+			rect.Height -= 1;
+
+			e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+			using (GraphicsPath path = CreateRoundRectPath(rect, 8))
+			{
+				// 整个窗体白色底色
+				using (SolidBrush white = new SolidBrush(Color.White))
+				{
+					e.Graphics.FillPath(white, path);
+				}
+
+				// 标题栏与按钮区的浅灰底色（铺满宽度，裁剪到圆角路径内，四角随窗体一起变圆角）
+				int buttonBlockHeight = ButtonHeight + 16;
+				Region oldClip = e.Graphics.Clip;
+				e.Graphics.SetClip(path);
+				using (SolidBrush light = new SolidBrush(LightBg))
+				{
+					e.Graphics.FillRectangle(light, 0, 0, ClientSize.Width, TitleBarHeight);
+					e.Graphics.FillRectangle(light, 0, ClientSize.Height - buttonBlockHeight, ClientSize.Width, buttonBlockHeight);
+				}
+				e.Graphics.Clip = oldClip;
+
+				// 圆角边框（最后绘制，覆盖在浅灰底色之上）
+				using (Pen pen = new Pen(BorderColor, 1f))
+				{
+					e.Graphics.DrawPath(pen, path);
+				}
+			}
+		}
+
+		private static GraphicsPath CreateRoundRectPath(Rectangle rect, int radius)
+		{
+			GraphicsPath path = new GraphicsPath();
+			int d = radius * 2;
+
+			path.AddArc(rect.Left, rect.Top, d, d, 180, 90);
+			path.AddArc(rect.Right - d, rect.Top, d, d, 270, 90);
+			path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+			path.AddArc(rect.Left, rect.Bottom - d, d, d, 90, 90);
+			path.CloseFigure();
+			return path;
+		}
+
+		/// <summary>
 		/// 以模态方式显示消息框，返回用户点击的按钮结果。
 		/// </summary>
 		public new DialogResult ShowDialog()
@@ -512,6 +566,21 @@ namespace WeiKit.Window
 		public new void Show()
 		{
 			base.Show();
+		}
+	}
+
+	/// <summary>
+	/// 支持透明背景的 Panel。标题栏/按钮区用它承载子控件，但自己不画背景，
+	/// 让窗体 <c>OnPaint</c> 绘制的圆角底色透出来。
+	/// </summary>
+	internal class TransparentPanel : Panel
+	{
+		public TransparentPanel()
+		{
+			SetStyle(ControlStyles.SupportsTransparentBackColor
+				| ControlStyles.OptimizedDoubleBuffer
+				| ControlStyles.AllPaintingInWmPaint, true);
+			BackColor = Color.Transparent;
 		}
 	}
 

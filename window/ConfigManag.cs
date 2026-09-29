@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -37,6 +38,37 @@ namespace WeiKit.Window
 			InitializeComponent();
 			SetupSearchBox();
 			SetupEmptyLabel();
+			ApplyAntiAliasedIcons();
+		}
+
+		/// <summary>
+		/// 把工具栏图标用高质量双三次插值预缩放到 ImageScalingSize，
+		/// 避免 ToolStrip 在 200×200 原图缩放到 24×24 时用默认低质量插值产生锯齿。
+		/// </summary>
+		private void ApplyAntiAliasedIcons()
+		{
+			Size target = toolStrip1.ImageScalingSize;
+			if (target.Width <= 0 || target.Height <= 0) return;
+
+			foreach (ToolStripItem item in toolStrip1.Items)
+			{
+				Image img = item.Image;
+				if (img == null) continue;
+				// 已是目标尺寸或更小则跳过，避免无谓放大
+				if (img.Width == target.Width && img.Height == target.Height) continue;
+
+				Bitmap scaled = new Bitmap(target.Width, target.Height);
+				scaled.SetResolution(img.HorizontalResolution, img.VerticalResolution);
+				using (Graphics g = Graphics.FromImage(scaled))
+				{
+					g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+					g.SmoothingMode = SmoothingMode.HighQuality;
+					g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+					g.CompositingQuality = CompositingQuality.HighQuality;
+					g.DrawImage(img, new Rectangle(0, 0, target.Width, target.Height));
+				}
+				item.Image = scaled;
+			}
 		}
 
 		private void SetupEmptyLabel()

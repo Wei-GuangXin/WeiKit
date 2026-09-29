@@ -1,0 +1,138 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <style>
+        body {
+            background-color: #0a0f0f;
+            background-image: 
+                radial-gradient(circle at 20% 40%, rgba(0, 255, 255, 0.08) 0%, transparent 30%),
+                linear-gradient(135deg, #0a0c0b 0%, #0e1a1a 100%);
+            color: #b0f0f0;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 25px;
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: auto;
+            text-shadow: 0 0 3px rgba(0, 255, 255, 0.3);
+        }
+
+        /* 日志级别样式 —— 科幻霓虹效果 */
+        .t {
+            color: #b0f0f0;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+            transition: all 0.25s ease;
+        }
+        .i {
+            color: #0ff;
+            text-shadow: 0 0 8px #0ff, 0 0 15px #0ff;
+        }
+        .w {
+            color: #ffb347;
+            text-shadow: 0 0 8px #ffb347, 0 0 15px #ff8c00;
+        }
+        .e {
+            color: #ff3b6f;
+            font-weight: bold;
+            text-shadow: 0 0 8px #ff3b6f, 0 0 20px #ff1a4f, 0 0 30px #ff0033;
+            background-color: rgba(255, 59, 111, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            animation: errorPulse 1.8s infinite ease-in-out;
+        }
+
+        /* 错误脉冲动画 */
+        @keyframes errorPulse {
+            0% { text-shadow: 0 0 5px #ff3b6f, 0 0 15px #ff1a4f; }
+            50% { text-shadow: 0 0 20px #ff3b6f, 0 0 35px #ff1a4f, 0 0 50px #ff0033; }
+            100% { text-shadow: 0 0 5px #ff3b6f, 0 0 15px #ff1a4f; }
+        }
+
+        /* 鼠标悬停互动 —— 光轨效果 */
+        .t:hover, .i:hover, .w:hover, .e:hover {
+            background-color: rgba(0, 255, 255, 0.08);
+            border-left: 3px solid currentColor;
+            padding-left: 10px;
+            transform: translateX(3px);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        /* 科幻背景 SVG 容器 —— 置于底层，不影响文本操作 */
+        .scifi-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        /* 可选的扫描线效果（纯CSS点缀） */
+        body::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0, 255, 255, 0.02) 0px, rgba(0, 0, 0, 0.2) 2px, transparent 3px);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* 确保所有文本在背景之上 */
+        pre, div, p {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- 简约动态 SVG 背景 —— 网格、脉冲点、流动线条 -->
+    <div class="scifi-bg">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+            <defs>
+                <!-- 半透明网格图案 -->
+                <pattern id="grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0, 255, 255, 0.12)" stroke-width="0.7"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+
+            <!-- 随机脉冲光点 (SMIL动画) -->
+            <circle cx="15%" cy="25%" r="3" fill="rgba(0, 255, 255, 0.25)">
+                <animate attributeName="r" values="3;7;3" dur="4s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.3;0.7;0.3" dur="4s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="85%" cy="70%" r="4" fill="rgba(255, 75, 120, 0.2)">
+                <animate attributeName="r" values="4;9;4" dur="5s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.2;0.6;0.2" dur="5s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="45%" cy="85%" r="2" fill="rgba(255, 200, 50, 0.2)">
+                <animate attributeName="r" values="2;5;2" dur="3.5s" repeatCount="indefinite" />
+            </circle>
+
+            <!-- 动态流动的数据线 -->
+            <path d="M -10% 30% Q 20% 20%, 40% 35% T 110% 30%" stroke="rgba(0, 200, 255, 0.25)" stroke-width="1.5" fill="none">
+                <animate attributeName="d" 
+                         values="M -10% 30% Q 20% 20%, 40% 35% T 110% 30%;
+                                 M -10% 45% Q 20% 35%, 40% 50% T 110% 45%;
+                                 M -10% 30% Q 20% 20%, 40% 35% T 110% 30%"
+                         dur="10s" 
+                         repeatCount="indefinite" />
+            </path>
+            <path d="M -10% 70% Q 30% 55%, 60% 75% T 110% 70%" stroke="rgba(255, 100, 150, 0.2)" stroke-width="1.2" fill="none">
+                <animate attributeName="d" 
+                         values="M -10% 70% Q 30% 55%, 60% 75% T 110% 70%;
+                                 M -10% 82% Q 30% 67%, 60% 87% T 110% 82%;
+                                 M -10% 70% Q 30% 55%, 60% 75% T 110% 70%"
+                         dur="12s" 
+                         repeatCount="indefinite" />
+            </path>
+        </svg>
+    </div>

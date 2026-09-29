@@ -37,6 +37,7 @@
 |---|---|
 | `Configs` | 配置项管理：增删改查、类型化读写、导入导出、`ConfigChanged` 事件，支持 AES 加密落盘 |
 | `Logs` | 日志记录：多级日志、`RedirectConsoleOut` 接管控制台、自动落盘、内置日志窗口 |
+| `ConsoleLogTheme` | 日志窗口主题：内置 13 个主题 + 目录化自定义（`themes\*.html`），当前主题持久化 |
 | `CryptoHelper` | AES 加解密、文件加密存储 |
 | `HttpLink` | HTTP 基础请求：GET/POST、图片下载、`DownTool` 下载器、`UploadTool` 上传器 |
 | `WebServer` | 基于 `HttpListener` 的内嵌 Web 服务（软页面 + 访问日志，含路径穿越防护） |
@@ -45,8 +46,9 @@
 | `ProgTool` | 机器码生成、管理员运行/重启、编译时间、ClickOnce 卸载等 |
 | `Tool` | 工具集合：开机自启、路径转换、控件圆角、动画、SHA256、安全跨线程调用、`WindowZoomer` 窗口控件缩放、`DataFlowList` 定长滑动窗口统计等 |
 | `States` | 计数与统计字段的自动维护 |
+| `WMessageBox` | 自定义消息框：普通/动态/图片消息框、`ShowToast` 边缘滑入的定时提示框（支持相对屏幕或宿主窗口定位），以及文本/开关/数字/日期/颜色/文件/路径等输入询问框 |
 | `Comp.*` | 自绘控件：`Switch` / `Led` / `Chart` / `ProgressBar` / `ProgressRing` / `Panels` |
-| `Window.*` | 内置窗口：配置管理窗口 `ConfigManag`、日志窗口 `Logsinfo` |
+| `Window.*` | 内置窗口：配置管理窗口 `ConfigManag`、日志窗口 `Logsinfo`、消息框 `WMessageBoxBase`、Toast `WToast` |
 
 ## 依赖
 
@@ -60,7 +62,7 @@
 ```
 WeiKit-light/
 ├── Comp/          # 自绘控件（Chart / Led / Panels / ProgressBar / ProgressRing / Switch）
-├── Window/        # 内置窗口（ConfigManag / Logsinfo）
+├── Window/        # 内置窗口（ConfigManag / Logsinfo / WMessageBoxBase / WToast）
 ├── Resources/     # 界面图标资源
 ├── demo/          # 可直接运行的示例程序 WeiKit.Demo
 ├── doc/           # 使用文档（HTML）
@@ -71,6 +73,7 @@ WeiKit-light/
 ├── WebServer.cs   # 内嵌 Web 服务
 ├── DingDingAPI.cs # 钉钉机器人
 ├── SakuraFrpcAPI.cs
+├── WMessageBox.cs # 消息框静态入口
 ├── ProgTool.cs / Tool.cs / States.cs / ...
 └── WeiKit.csproj / WeiKit.sln
 ```

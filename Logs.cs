@@ -227,8 +227,8 @@ namespace WeiKit
 			TextWriter original = Console.Out;
 			Console.SetOut(new CustomTextWriter(this));
 			//显示库的关于信息
-			Console.WriteLine($"WeiKit Framework | Version: {Assembly.GetExecutingAssembly().GetName().Version.ToString()}");
-			Console.WriteLine($"© Tiangong Technology Team & WeiGuangXin");
+			//Console.WriteLine($"WeiKit Framework | Version: {Assembly.GetExecutingAssembly().GetName().Version.ToString()}");
+			//Console.WriteLine($"MIT License Copyright © 2026 WeiGuangXin");
 			return original;
 		}
 

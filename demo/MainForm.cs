@@ -138,7 +138,7 @@ namespace WeiKit.Demo
 			Ui.AddRow(grid, "③ 程序工具", "机器码、编译时间、文件 SHA256、随机串、路径转换、注册表自启动、DataFlowList 统计");
 			Ui.AddRow(grid, "④ 网络", "GET/POST、图片下载、多线程下载器（带进度）、multipart 上传、内置 WebServer、钉钉机器人");
 			Ui.AddRow(grid, "⑤ 自绘控件", "Switch / Led / Chart / ProgressBar / ProgressRing / Panels 六个控件实时演示");
-			Ui.AddRow(grid, "⑥ 消息框", "WMessageBox 普通/动态/图片消息框 + 文本/开关/数字/日期/颜色/文件等输入询问框");
+			Ui.AddRow(grid, "⑥ 消息框", "WMessageBox 普通/动态/图片消息框、Toast 提示 + 文本/开关/数字/日期/颜色/文件等输入询问框");
 			content.Controls.Add(grid);
 
 			Ui.AddHeader(content, "快捷入口");
@@ -174,7 +174,7 @@ namespace WeiKit.Demo
 			Ui.AddRow(g1, "项目名称", Program.DisplayName);
 			Ui.AddRow(g1, "LibraryAuthor", Info.LibraryAuthor);
 			Ui.AddRow(g1, "LibraryUrl", Info.LibraryUrl);
-			Ui.AddRow(g1, "程序集版本", typeof(Configs).Assembly.GetName().Version.ToString());
+			Ui.AddRow(g1, "程序集版本", Info.Version);
 			content.Controls.Add(g1);
 
 			Ui.AddHeader(content, "本 Demo 演示的 API 速查");
@@ -182,13 +182,13 @@ namespace WeiKit.Demo
 			Ui.SetupGrid(g2, "模块", "主要 API");
 			Ui.AddRow(g2, "配置", "Configs.Add / Read / WriteValue / Load / Save / Reset / InputData / OutSave / ShowConfigManagForm");
 			Ui.AddRow(g2, "日志", "Logs.Println / LogsSave / LogAddEvent / RedirectConsoleOut / ShowLogsForm / MaxLogPcs / AutoSavePath");
-			Ui.AddRow(g2, "主题", "ConsoleLogTheme.GetHtmlHeader(ThemeType)（13 种主题）");
+			Ui.AddRow(g2, "主题", "ConsoleLogTheme.GetThemeNames / GetHtmlHeader(name)（目录化主题，支持自定义）");
 			Ui.AddRow(g2, "加密", "CryptoHelper.SaveEncrypted<T> / LoadDecrypted<T>");
 			Ui.AddRow(g2, "工具", "Tool.GetProgramPath / GetRandomString / PathConversion / RunCmdCode / CalculateFileChecksum / ComputeSha256Hash / SetControlFillet / SafeInvoke / DataFlowList");
 			Ui.AddRow(g2, "程序", "ProgTool.IsRunAsAdmin / RunAsAdmin / ProgramRestart / GenerateMachineCode / GetBuildTime / UninstallClickOnce");
 			Ui.AddRow(g2, "网络", "HttpLink.GetTask / PostTask / GetImageFromUrl / GetClientIP、DownTool、UploadTool、WebServer、DingDingAPI");
 			Ui.AddRow(g2, "控件", "Comp.Switch / Led / Chart / ProgressBar / ProgressRing / Panels");
-			Ui.AddRow(g2, "消息框", "WMessageBox.Show / ShowInfo / ShowSuccess / ShowWarning / ShowError / ShowQuestion / ShowDynamic / ShowImage / AskText / AskSwitch / AskNumber / AskDate / AskTime / AskDateTime / AskColor / AskFile / AskFolder / AskPath");
+			Ui.AddRow(g2, "消息框", "WMessageBox.Show / ShowInfo / ShowSuccess / ShowWarning / ShowError / ShowQuestion / ShowDynamic / ShowImage / ShowToast / AskText / AskSwitch / AskNumber / AskDate / AskTime / AskDateTime / AskColor / AskFile / AskFolder / AskPath");
 			content.Controls.Add(g2);
 
 			Ui.AddHeader(content, "已知限制（仍建议遵守）");

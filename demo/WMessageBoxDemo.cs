@@ -25,12 +25,13 @@ namespace WeiKit.Demo
 
 			Ui.AddHint(content,
 				"WMessageBox 是 WeiKit 提供的自定义消息框，替代系统 MessageBox，" +
-				"支持自定义图标、按钮组合、动态更新、图片预览，以及文本/开关/数字/日期/时间/颜色/文件/路径等输入询问。" +
+				"支持自定义图标、按钮组合、动态更新、图片预览、Toast 提示，以及文本/开关/数字/日期/时间/颜色/文件/路径等输入询问。" +
 				"下面每个按钮都会真实弹出对应的消息框。");
 
 			BuildNormalMessageBox(content);
 			BuildDynamicMessageBox(content);
 			BuildImageMessageBox(content);
+			BuildToast(content);
 			BuildAskText(content);
 			BuildAskSwitch(content);
 			BuildAskNumber(content);
@@ -43,7 +44,8 @@ namespace WeiKit.Demo
 				"· 所有 Show* 方法都返回 DialogResult，可据此判断用户点击了哪个按钮；\r\n" +
 				"· 所有 Ask* 方法在用户点击「取消」时返回 null（值类型返回可空类型），点击「确定」返回输入值；\r\n" +
 				"· ShowDynamic 返回窗体实例，需自行调用 UpdateMessage 更新文字、Close 关闭（不会自动关闭）；\r\n" +
-				"· 图标由 GDI+ 实时绘制（Info 蓝/Success 绿/Warning 橙/Error 红/Question 蓝），不依赖外部图片资源。");
+				"· ShowToast 是非模态的 Toast，从屏幕边缘滑入、停留后自动滑出销毁；\r\n" +
+				"· 图标使用库自带的 PNG 资源（信息/正确/注意/错误），与其它窗口风格一致。");
 
 			Ui.Log("WMessageBox 演示页已就绪。", "Info");
 			return host;
@@ -190,11 +192,79 @@ namespace WeiKit.Demo
 
 		#endregion
 
-		#region 4. 文本输入框
+		#region 4. Toast 提示框
+
+		private void BuildToast(FlowLayoutPanel content)
+		{
+			Ui.AddHeader(content, "4. Toast 提示框（边缘滑入，定时自动销毁）");
+			var g = Ui.Group(content, "ShowToast(message, title, icon, position, durationMs, owner) → WToast");
+
+			Ui.Row(g,
+				Ui.Btn("屏幕·右下角（默认）", (s, e) =>
+				{
+					WMessageBox.ShowToast("这是一条从屏幕右下角滑入的提示。");
+					Ui.Log("ShowToast 已弹出（屏幕右下角）。", "Info");
+				}, 170),
+				Ui.Btn("屏幕·带标题", (s, e) =>
+				{
+					WMessageBox.ShowToast("配置文件已自动保存。", "操作成功", WMessageBoxIcon.Success);
+					Ui.Log("ShowToast(带标题 + Success 图标) 已弹出。", "Info");
+				}, 150),
+				Ui.Btn("屏幕·左上角·警告", (s, e) =>
+				{
+					WMessageBox.ShowToast("磁盘剩余空间不足 10%。", "注意", WMessageBoxIcon.Warning, ToastPosition.TopLeft);
+					Ui.Log("ShowToast(左上角 + Warning 图标) 已弹出。", "Info");
+				}, 170));
+
+			Ui.Row(g,
+				Ui.Btn("屏幕·右上角·5 秒", (s, e) =>
+				{
+					WMessageBox.ShowToast("这条会停留 5 秒再滑出。", icon: WMessageBoxIcon.Info,
+						position: ToastPosition.TopRight, durationMs: 5000);
+					Ui.Log("ShowToast(右上角, 5000ms) 已弹出。", "Info");
+				}, 160),
+				Ui.Btn("屏幕·左下角·错误", (s, e) =>
+				{
+					WMessageBox.ShowToast("连接服务器超时。", "错误", WMessageBoxIcon.Error, ToastPosition.BottomLeft);
+					Ui.Log("ShowToast(左下角 + Error 图标) 已弹出。", "Info");
+				}, 170),
+				Ui.Btn("连续弹三条", (s, e) =>
+				{
+					WMessageBox.ShowToast("第一条提示", icon: WMessageBoxIcon.Info, position: ToastPosition.BottomRight);
+					WMessageBox.ShowToast("第二条提示", icon: WMessageBoxIcon.Success, position: ToastPosition.BottomRight, durationMs: 2000);
+					WMessageBox.ShowToast("第三条提示", icon: WMessageBoxIcon.Warning, position: ToastPosition.BottomRight, durationMs: 4000);
+					Ui.Log("已连续弹出三条 Toast（屏幕右下角）。", "Info");
+				}, 150));
+
+			Ui.Row(g,
+				Ui.Btn("本窗口·右下角", (s, e) =>
+				{
+					var owner = content.FindForm();
+					WMessageBox.ShowToast("在本窗口客户区右下角滑入。", icon: WMessageBoxIcon.Info,
+						position: ToastPosition.BottomRight, owner: owner);
+					Ui.Log("ShowToast(owner=本窗口, 右下角) 已弹出。", "Info");
+				}, 170),
+				Ui.Btn("本窗口·右上角", (s, e) =>
+				{
+					var owner = content.FindForm();
+					WMessageBox.ShowToast("这条锚定在本窗口右上角。", "窗口内提示",
+						WMessageBoxIcon.Success, ToastPosition.TopRight, owner: owner);
+					Ui.Log("ShowToast(owner=本窗口, 右上角) 已弹出。", "Info");
+				}, 170));
+
+			Ui.AddHint(g,
+				"Toast 是非模态的，不会阻塞调用方；从边缘滑入后停留 durationMs，再自动滑出销毁。" +
+				"owner 传 null 时相对屏幕工作区定位，传某个窗体则相对该窗体客户区定位（适合窗口内提示）。" +
+				"返回的 WToast 实例可在需要时调用 Close() 提前关闭。");
+		}
+
+		#endregion
+
+		#region 5. 文本输入框
 
 		private void BuildAskText(FlowLayoutPanel content)
 		{
-			Ui.AddHeader(content, "4. 询问文本输入框");
+			Ui.AddHeader(content, "5. 询问文本输入框");
 			var g = Ui.Group(content, "AskText(title, message, defaultValue, multiline) → string");
 
 			Ui.Row(g,
@@ -218,11 +288,11 @@ namespace WeiKit.Demo
 
 		#endregion
 
-		#region 5. 开关输入框
+		#region 6. 开关输入框
 
 		private void BuildAskSwitch(FlowLayoutPanel content)
 		{
-			Ui.AddHeader(content, "5. 询问开关输入框（使用 WeiKit.Comp.Switch）");
+			Ui.AddHeader(content, "6. 询问开关输入框（使用 WeiKit.Comp.Switch）");
 			var g = Ui.Group(content, "AskSwitch(title, message, defaultValue) → bool?");
 
 			Ui.Row(g,
@@ -246,11 +316,11 @@ namespace WeiKit.Demo
 
 		#endregion
 
-		#region 6. 数字输入框
+		#region 7. 数字输入框
 
 		private void BuildAskNumber(FlowLayoutPanel content)
 		{
-			Ui.AddHeader(content, "6. 询问数字输入框");
+			Ui.AddHeader(content, "7. 询问数字输入框");
 			var g = Ui.Group(content, "AskNumber(title, message, defaultValue, min, max, decimalPlaces) → decimal?");
 
 			Ui.Row(g,
@@ -276,11 +346,11 @@ namespace WeiKit.Demo
 
 		#endregion
 
-		#region 7. 日期 / 时间 / 日期时间
+		#region 8. 日期 / 时间 / 日期时间
 
 		private void BuildAskDateTime(FlowLayoutPanel content)
 		{
-			Ui.AddHeader(content, "7. 询问日期 / 时间 / 日期时间输入框");
+			Ui.AddHeader(content, "8. 询问日期 / 时间 / 日期时间输入框");
 			var g = Ui.Group(content, "AskDate / AskTime / AskDateTime → DateTime?");
 
 			Ui.Row(g,
@@ -303,11 +373,11 @@ namespace WeiKit.Demo
 
 		#endregion
 
-		#region 8. 颜色输入框
+		#region 9. 颜色输入框
 
 		private void BuildAskColor(FlowLayoutPanel content)
 		{
-			Ui.AddHeader(content, "8. 询问颜色输入框");
+			Ui.AddHeader(content, "9. 询问颜色输入框");
 			var g = Ui.Group(content, "AskColor(title, defaultColor, allowFullOpen) → Color?");
 
 			// 展示当前选中颜色的小方块
@@ -339,11 +409,11 @@ namespace WeiKit.Demo
 
 		#endregion
 
-		#region 9. 文件 / 文件夹 / 路径
+		#region 10. 文件 / 文件夹 / 路径
 
 		private void BuildAskFileFolderPath(FlowLayoutPanel content)
 		{
-			Ui.AddHeader(content, "9. 询问文件 / 文件夹 / 路径输入框");
+			Ui.AddHeader(content, "10. 询问文件 / 文件夹 / 路径输入框");
 			var g = Ui.Group(content, "AskFile / AskFolder / AskPath → string");
 
 			Ui.Row(g,

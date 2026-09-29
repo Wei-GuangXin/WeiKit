@@ -479,5 +479,34 @@ namespace WeiKit
 		}
 
 		#endregion
+
+		#region Toast 提示框
+
+		/// <summary>
+		/// 显示一个从边缘滑入、停留后自动滑出并销毁的小提示框（Toast）。
+		/// 非模态，不阻塞调用方。
+		/// </summary>
+		/// <param name="message">消息正文</param>
+		/// <param name="title">可选标题（加粗显示在正文上方）</param>
+		/// <param name="icon">图标类型</param>
+		/// <param name="position">出现的边缘位置，默认右下角</param>
+		/// <param name="durationMs">停留时长（毫秒，不含滑入滑出动画），默认 3000</param>
+		/// <param name="owner">宿主窗口。传 null 时相对屏幕工作区定位；传某个窗体则相对该窗体的客户区定位。</param>
+		/// <returns>Toast 窗体实例；一般无需保存，若要提前关闭可调用其 <see cref="Form.Close"/>。</returns>
+		public static WToast ShowToast(string message, string title = null,
+			WMessageBoxIcon icon = WMessageBoxIcon.Info,
+			ToastPosition position = ToastPosition.BottomRight,
+			int durationMs = 3000,
+			IWin32Window owner = null)
+		{
+			var toast = new WToast(message, title, icon, position, durationMs, owner);
+			if (owner != null)
+				toast.Show(owner);
+			else
+				toast.Show();
+			return toast;
+		}
+
+		#endregion
 	}
 }

@@ -79,15 +79,16 @@ namespace WeiKit.Demo
 
 			var gView = Ui.Group(content, "查看窗口与导出");
 			cboTheme = new ComboBox { Width = 170, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0, 4, 10, 3) };
-			foreach (var t in Enum.GetValues(typeof(ConsoleLogTheme.ThemeType))) cboTheme.Items.Add(t);
-			cboTheme.SelectedIndex = 2;   // LightClean
+			foreach (var t in ConsoleLogTheme.GetThemeNames()) cboTheme.Items.Add(t);
+			int themeIdx = cboTheme.Items.IndexOf(ConsoleLogTheme.LoadCurrentTheme());
+			cboTheme.SelectedIndex = themeIdx >= 0 ? themeIdx : (cboTheme.Items.Count > 0 ? 0 : -1);
 
 			Ui.Row(gView,
 				Ui.Btn("打开日志窗口（库托管）", (s, e) => OpenLibraryWindow(), 180),
 				Ui.Btn("自行创建并指定主题", (s, e) => OpenOwnWindow(), 175),
 				Ui.Text("主题：", 45),
 				cboTheme,
-				Ui.Btn("切换 ThemeType", (s, e) => ApplyTheme(), 130));
+				Ui.Btn("切换主题", (s, e) => ApplyTheme(), 130));
 			Ui.Row(gView,
 				Ui.Btn("导出日志文件", (s, e) => ExportLog(), 140),
 				Ui.Btn("清空日志列表", (s, e) =>
@@ -98,7 +99,7 @@ namespace WeiKit.Demo
 				Ui.Btn("取最后一条日志", (s, e) => LastLog(), 150));
 			Ui.AddHint(gView,
 				"「库托管」用 Logs.ShowLogsForm()，它会替你按正确顺序赋值 logs、AutoColorMode 再显示；" +
-				"「自行创建」演示 new Logsinfo() 时必须先给 logs 赋值再 Show()。ThemeType 必须在 Show 之前设置才生效。");
+				"「自行创建」演示 new Logsinfo() 时必须先给 logs 赋值再 Show()。主题名必须在 Show 之前设置才生效。");
 
 			// ==================== 加密解密 ====================
 			Ui.AddHeader(content, "加密解密 CryptoHelper");
@@ -150,7 +151,7 @@ namespace WeiKit.Demo
 
 		private void OpenOwnWindow()
 		{
-			// 演示正确顺序：先赋 logs / AutoColorMode / ThemeType，最后 Show
+			// 演示正确顺序：先赋 logs / AutoColorMode / ThemeName，最后 Show
 			if (logWindow != null && !logWindow.IsDisposed)
 			{
 				logWindow.BringToFront();
@@ -162,24 +163,25 @@ namespace WeiKit.Demo
 			{
 				logs = Program.Log,
 				AutoColorMode = true,
-				ThemeType = (ConsoleLogTheme.ThemeType)cboTheme.SelectedItem
+				ThemeName = cboTheme.SelectedItem?.ToString()
 			};
 			logWindow.FormClosed += (s, e) => Ui.Log("自定义日志窗口已关闭。", "Info");
 			logWindow.Show();
-			Ui.Log($"已自行创建日志窗口，主题 {logWindow.ThemeType}。", "Info");
+			Ui.Log($"已自行创建日志窗口，主题 {logWindow.ThemeName}。", "Info");
 		}
 
 		private void ApplyTheme()
 		{
 			if (logWindow == null || logWindow.IsDisposed)
 			{
-				Ui.Info("请先点「自行创建并指定主题」打开窗口，ThemeType 只对自建窗口生效。\r\n" +
+				Ui.Info("请先点「自行创建并指定主题」打开窗口，主题名只对自建窗口生效。\r\n" +
 						"（库托管的窗口请在窗口右上角菜单里切换主题。）");
 				return;
 			}
-			logWindow.ThemeType = (ConsoleLogTheme.ThemeType)cboTheme.SelectedItem;
+			logWindow.ThemeName = cboTheme.SelectedItem?.ToString();
+			ConsoleLogTheme.SaveCurrentTheme(logWindow.ThemeName);
 			logWindow.RefreshContent();                 // 详见窗口新增的公开刷新方法
-			Ui.Log($"日志窗口主题已切换为 {logWindow.ThemeType}。", "Info");
+			Ui.Log($"日志窗口主题已切换为 {logWindow.ThemeName}。", "Info");
 		}
 
 		private void ExportLog()

@@ -1,0 +1,35 @@
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <style>
+        body {
+            background-color: #0a0a14;
+            color: #00f3ff;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 10px;
+            background-image: 
+                radial-gradient(circle at 20% 30%, #1a1a2e 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, #16213e 0%, transparent 50%);
+        }
+        .t { color: #00f3ff; text-shadow: 0 0 5px #00f3ff; }
+        .i { color: #9d00ff; text-shadow: 0 0 5px #9d00ff; }
+        .w { color: #ffcc00; text-shadow: 0 0 5px #ffcc00; }
+        .e { 
+            color: #ff0055; 
+            text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055;
+            animation: neonFlicker 2s infinite alternate;
+        }
+        @keyframes neonFlicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+            20%, 24%, 55% { opacity: 0.7; }
+        }
+        pre {
+            margin: 2px 0;
+            border-left: 2px solid #00f3ff;
+            padding-left: 8px;
+        }
+    </style>
+</head>
+<body>

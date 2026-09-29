@@ -1,0 +1,66 @@
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #c0c0c0;
+            font-family: 'VT323', 'Courier New', monospace;
+            margin: 20px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            font-size: 18px;
+            border: 15px solid #333;
+            border-radius: 8px;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0, 150, 0, 0.1) 1px, transparent 1px);
+            background-size: 100% 2px;
+            pointer-events: none;
+            animation: scanlines 10s linear infinite;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+            pointer-events: none;
+        }
+        .t { color: #c0c0c0; }
+        .i { color: #90ee90; }
+        .w { color: #ffcc00; }
+        .e { 
+            color: #ff4444;
+            font-weight: bold;
+            text-shadow: 0 0 5px #ff4444;
+            animation: crtFlicker 0.5s infinite;
+        }
+        @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100%); }
+        }
+        @keyframes crtFlicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        pre {
+            margin: 4px 0;
+            padding: 4px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(100, 100, 100, 0.3);
+        }
+    </style>
+</head>
+<body>
