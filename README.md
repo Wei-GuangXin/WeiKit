@@ -124,4 +124,4 @@ private void MainForm_Load(object sender, EventArgs e)
 
 再次强调：MIT 许可**不含任何担保、也不承担任何责任**，详见上方「免责声明」。
 
-> MIT License 完整许可文本以仓库内 `LICENSE` 文件为准（如尚未单独放置，可自行按标准 MIT 模板添加；Copyright © 2025 Wei Guang Xin）。
+> MIT License 完整许可文本以仓库内 `LICENSE` 文件为准。
