@@ -20,7 +20,7 @@ namespace WeiKit
 		/// </summary>
 		public const string LibraryAuthor = "Wei Guang Xin";
 
-		private const bool Isrelease = true;
+		private const bool Isrelease = false;
 
 		private static string _version;
 

@@ -689,6 +689,134 @@ namespace WeiKit
 		}
 
 		/// <summary>
+		/// 通过更改实例属性的方式，将一个窗口嵌入到另一个窗口中
+		/// </summary>
+		/// <param name="childForm"></param>
+		/// <param name="containerControl"></param>
+		public static void EmbedWindow(Form childForm, Control containerControl)
+		{
+			if (childForm == null) return;
+			if (containerControl == null) return;
+
+			// 1. 取消顶级窗口身份，让它变成普通控件
+			childForm.TopLevel = false;
+			// 2. 去掉边框，避免嵌入后出现窗口标题栏和边框
+			childForm.FormBorderStyle = FormBorderStyle.None;
+			// 3. 指定父容器
+			childForm.Parent = containerControl;
+			// 4. 填满整个容器
+			childForm.Dock = DockStyle.Fill;
+			// 5. 显示（TopLevel = false 后必须显式 Show，否则不可见）
+			childForm.Show();
+		}
+
+		[DllImport("user32.dll")]
+		private static extern IntPtr GetDesktopWindow();
+
+		[DllImport("user32.dll")]
+		private static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprcUpdate, IntPtr hrgnUpdate, uint flags);
+
+		private const uint RDW_FRAME = 0x0400;
+		private const uint RDW_INVALIDATE = 0x0001;
+		private const uint RDW_UPDATENOW = 0x0100;
+		private const uint RDW_ALLCHILDREN = 0x0080;
+		private const int SW_SHOWNORMAL = 1;
+
+		[DllImport("user32.dll", SetLastError = true)]
+		private static extern bool SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
+
+		[DllImport("user32.dll", SetLastError = true)]
+		private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+		[DllImport("user32.dll", SetLastError = true)]
+		private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+		[DllImport("user32.dll", SetLastError = true)]
+		private static extern IntPtr GetWindowLongW(IntPtr hWnd, int nIndex);
+
+		[DllImport("user32.dll", SetLastError = true)]
+		private static extern IntPtr SetWindowLongW(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+		// 常量定义
+		private const int SWP_NOZORDER = 0x0004;
+		private const int SWP_NOMOVE = 0x0002;
+		private const int SWP_NOACTIVATE = 0x0010;
+		private const int SWP_FRAMECHANGED = 0x0020;
+		private const int GWL_STYLE = -16;
+		private const int WS_BORDER = 0x00800000;
+		private const int WS_DLGFRAME = 0x00400000;
+		private const int WS_CAPTION = WS_BORDER | WS_DLGFRAME;
+		private const int SW_MAXIMIZE = 3;
+		private const int SW_HIDE = 0;
+		private const int SW_SHOW = 5;
+		private const int WS_THICKFRAME = 0x00040000;  // 可调整大小的边框
+
+		/// <summary>
+		/// 将指定窗口嵌入到目标容器中，并设置为最大化无边框。
+		/// </summary>
+		/// <param name="hWndToEmbed">要嵌入的窗口句柄</param>
+		/// <param name="containerControl">目标容器控件</param>
+		public static void EmbedWindow(IntPtr hWndToEmbed, Control containerControl)
+		{
+			if (hWndToEmbed == IntPtr.Zero || containerControl == null)
+				throw new ArgumentException("Invalid arguments provided.");
+			try
+			{
+				// 隐藏原窗口标题栏和边框
+				IntPtr style = GetWindowLongW(hWndToEmbed, GWL_STYLE);
+				long stylea = style.ToInt64();
+				stylea &= ~WS_CAPTION;
+				stylea &= ~WS_THICKFRAME;
+				SetWindowLongW(hWndToEmbed, GWL_STYLE, new IntPtr(stylea));
+				// 设置父窗口为容器控件
+				SetParent(hWndToEmbed, containerControl.Handle);
+				// 最大化窗口并调整大小以适应容器
+				ShowWindow(hWndToEmbed, SW_MAXIMIZE);
+				// 强制更新窗口布局（包括去除边框的效果）
+				SetWindowPos(hWndToEmbed, IntPtr.Zero, 0, 0, containerControl.Width, containerControl.Height,
+					SWP_NOZORDER | SWP_FRAMECHANGED);
+				containerControl.Focus();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Failed to embed window: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+
+		/// <summary>
+		/// 取消窗口嵌入，将其恢复为独立窗口
+		/// </summary>
+		/// <param name="hWndToUnembed">要取消嵌入的窗口句柄</param>
+		public static void UnembedWindow(IntPtr hWndToUnembed)
+		{
+			if (hWndToUnembed == IntPtr.Zero)
+				throw new ArgumentException("Invalid window handle provided.");
+
+			try
+			{
+				// 将父窗口设置为桌面窗口（恢复为独立窗口）
+				SetParent(hWndToUnembed, GetDesktopWindow());
+
+				// 恢复窗口的正常显示状态（非最大化）
+				ShowWindow(hWndToUnembed, SW_SHOWNORMAL);
+
+				// 重新设置窗口位置和大小，确保窗口可见
+				SetWindowPos(hWndToUnembed, IntPtr.Zero,
+					100, 100, 800, 600,  // 可以根据需要调整初始位置和大小
+					SWP_NOZORDER | SWP_FRAMECHANGED);
+
+				// 重绘窗口以确保正确显示
+				RedrawWindow(hWndToUnembed, IntPtr.Zero, IntPtr.Zero,
+					RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Failed to unembed window: {ex.Message}",
+					"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+		}
+
+		/// <summary>
 		/// 窗口控件缩放器：在窗口尺寸变化时，按比例缩放其内部所有控件的大小与位置（可选同时缩放字体）。
 		/// 使用方法：在目标窗口的 Load 事件中创建实例，例如 <c>zoomer = new Tool.WindowZoomer(this, false);</c>。
 		/// </summary>
@@ -735,7 +863,7 @@ namespace WeiKit
 					{
 						ControlSizeTemp.Add(s.Size);                          // 存储控件初始大小
 						ControlLocationTemp.Add(new Location(s.Left, s.Top)); // 存储控件初始位置
-						// 如果该控件包含其它控件
+																			  // 如果该控件包含其它控件
 						if (s.Controls != null && s.Controls.Count > 0)
 							traverse(s);
 					}

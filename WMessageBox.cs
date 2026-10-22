@@ -11,6 +11,10 @@ namespace WeiKit
 	/// 提供普通消息框、动态消息框、图片消息框，以及一系列输入询问框
 	/// （文本 / 开关 / 数字 / 日期 / 时间 / 日期时间 / 颜色 / 文件 / 文件夹 / 路径）。
 	/// </summary>
+	/// <remarks>
+	/// 想把调用程序里所有的 <c>MessageBox.Show(...)</c> 一行重定向到本实现，
+	/// 可在文件顶部添加别名：<c>using MessageBox = WeiKit.WMessageBox;</c>。
+	/// </remarks>
 	public static class WMessageBox
 	{
 		#region 普通消息框
@@ -31,10 +35,112 @@ namespace WeiKit
 		/// </summary>
 		public static DialogResult Show(string message, string title, WMessageBoxIcon icon, WMessageBoxButtons buttons)
 		{
+			return Show(null, message, title, icon, buttons);
+		}
+
+		/// <summary>
+		/// 与系统 <c>MessageBox.Show(text, caption, buttons)</c> 同签名，用于把系统消息框重定向到本实现。
+		/// </summary>
+		public static DialogResult Show(string text, string caption, MessageBoxButtons buttons)
+		{
+			return Show(null, text, caption, MapIcon(MessageBoxIcon.None), MapButtons(buttons));
+		}
+
+		/// <summary>
+		/// 与系统 <c>MessageBox.Show(text, caption, buttons, icon)</c> 同签名，用于把系统消息框重定向到本实现。
+		/// </summary>
+		public static DialogResult Show(string text, string caption, MessageBoxButtons buttons, MessageBoxIcon icon)
+		{
+			return Show(null, text, caption, MapIcon(icon), MapButtons(buttons));
+		}
+
+		/// <summary>
+		/// 与系统 <c>MessageBox.Show(owner, text)</c> 同签名，用于把系统消息框重定向到本实现。
+		/// </summary>
+		public static DialogResult Show(IWin32Window owner, string text)
+		{
+			return Show(owner, text, null, WMessageBoxIcon.Info, WMessageBoxButtons.OK);
+		}
+
+		/// <summary>
+		/// 与系统 <c>MessageBox.Show(owner, text, caption)</c> 同签名，用于把系统消息框重定向到本实现。
+		/// </summary>
+		public static DialogResult Show(IWin32Window owner, string text, string caption)
+		{
+			return Show(owner, text, caption, WMessageBoxIcon.Info, WMessageBoxButtons.OK);
+		}
+
+		/// <summary>
+		/// 与系统 <c>MessageBox.Show(owner, text, caption, buttons)</c> 同签名，用于把系统消息框重定向到本实现。
+		/// </summary>
+		public static DialogResult Show(IWin32Window owner, string text, string caption, MessageBoxButtons buttons)
+		{
+			return Show(owner, text, caption, MapIcon(MessageBoxIcon.None), MapButtons(buttons));
+		}
+
+		/// <summary>
+		/// 与系统 <c>MessageBox.Show(owner, text, caption, buttons, icon)</c> 同签名，用于把系统消息框重定向到本实现。
+		/// </summary>
+		public static DialogResult Show(IWin32Window owner, string text, string caption, MessageBoxButtons buttons, MessageBoxIcon icon)
+		{
+			return Show(owner, text, caption, MapIcon(icon), MapButtons(buttons));
+		}
+
+		/// <summary>
+		/// 统一执行入口：创建消息框并按是否指定所有者模态显示。
+		/// </summary>
+		private static DialogResult Show(IWin32Window owner, string message, string title, WMessageBoxIcon icon, WMessageBoxButtons buttons)
+		{
 			using (WMessageBoxBase box = new WMessageBoxBase())
 			{
 				box.Configure(title ?? Info.LibraryName, message ?? string.Empty, icon, buttons);
-				return box.ShowDialog();
+				return owner == null ? box.ShowDialog() : box.ShowDialog(owner);
+			}
+		}
+
+		/// <summary>
+		/// 将系统 <see cref="MessageBoxIcon"/> 映射到本库图标类型。
+		/// </summary>
+		private static WMessageBoxIcon MapIcon(MessageBoxIcon icon)
+		{
+			switch (icon)
+			{
+				case MessageBoxIcon.Error:
+					// Error/Hand/Stop 底层值同为 16
+					return WMessageBoxIcon.Error;
+				case MessageBoxIcon.Question:
+					return WMessageBoxIcon.Question;
+				case MessageBoxIcon.Warning:
+					// Warning/Exclamation 底层值同为 48
+					return WMessageBoxIcon.Warning;
+				case MessageBoxIcon.Information:
+					// Information/Asterisk 底层值同为 64
+					return WMessageBoxIcon.Info;
+				default:
+					return WMessageBoxIcon.None;
+			}
+		}
+
+		/// <summary>
+		/// 将系统 <see cref="MessageBoxButtons"/> 映射到本库按钮组合。
+		/// </summary>
+		private static WMessageBoxButtons MapButtons(MessageBoxButtons buttons)
+		{
+			switch (buttons)
+			{
+				case MessageBoxButtons.OKCancel:
+					return WMessageBoxButtons.OKCancel;
+				case MessageBoxButtons.YesNo:
+					return WMessageBoxButtons.YesNo;
+				case MessageBoxButtons.YesNoCancel:
+					return WMessageBoxButtons.YesNoCancel;
+				case MessageBoxButtons.RetryCancel:
+					return WMessageBoxButtons.RetryCancel;
+				case MessageBoxButtons.AbortRetryIgnore:
+					// 无直接对应组合，退化为「重试/取消」
+					return WMessageBoxButtons.RetryCancel;
+				default:
+					return WMessageBoxButtons.OK;
 			}
 		}
 

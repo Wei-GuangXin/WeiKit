@@ -103,6 +103,8 @@
     <Compile Include="HttpLink.cs" />
     <Compile Include="Info.cs" />
     <Compile Include="Logs.cs" />
+    <Compile Include="Module_Interface.cs" />
+    <Compile Include="ModuleManager.cs" />
     <Compile Include="ProgTool.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

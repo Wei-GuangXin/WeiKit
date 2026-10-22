@@ -299,7 +299,7 @@ namespace WeiKit.Window
 		public void SetIcon(WMessageBoxIcon icon)
 		{
 			iconVisible = (icon != WMessageBoxIcon.None);
-			picIcon.Image = GetIconImage(icon);
+			picIcon.Image = ScaleIcon(GetIconImage(icon), IconSize);
 			picIcon.Visible = iconVisible;
 			LayoutContent();
 		}
@@ -476,6 +476,27 @@ namespace WeiKit.Window
 				default:
 					return null;
 			}
+		}
+
+		/// <summary>
+		/// 用高质量双三次插值把图标预缩放到目标尺寸，避免 PictureBox 缩放时产生锯齿。
+		/// </summary>
+		private static Image ScaleIcon(Image img, int size)
+		{
+			if (img == null) return null;
+			if (img.Width <= size && img.Height <= size) return img;
+
+			Bitmap scaled = new Bitmap(size, size);
+			scaled.SetResolution(img.HorizontalResolution, img.VerticalResolution);
+			using (Graphics g = Graphics.FromImage(scaled))
+			{
+				g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+				g.SmoothingMode = SmoothingMode.HighQuality;
+				g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+				g.CompositingQuality = CompositingQuality.HighQuality;
+				g.DrawImage(img, new Rectangle(0, 0, size, size));
+			}
+			return scaled;
 		}
 
 		#endregion

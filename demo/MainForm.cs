@@ -100,6 +100,8 @@ namespace WeiKit.Demo
 
 			tabs.TabPages.Add(WrapTab("⑥ 消息框", new WMessageBoxDemo().Build()));
 
+			tabs.TabPages.Add(WrapTab("⑦ 插件", new ModuleDemo().Build()));
+
 			tabs.TabPages.Add(BuildAboutTab());
 
 			Controls.Add(tabs);
@@ -139,6 +141,7 @@ namespace WeiKit.Demo
 			Ui.AddRow(grid, "④ 网络", "GET/POST、图片下载、多线程下载器（带进度）、multipart 上传、内置 WebServer、钉钉机器人");
 			Ui.AddRow(grid, "⑤ 自绘控件", "Switch / Led / Chart / ProgressBar / ProgressRing / Panels 六个控件实时演示");
 			Ui.AddRow(grid, "⑥ 消息框", "WMessageBox 普通/动态/图片消息框、Toast 提示 + 文本/开关/数字/日期/颜色/文件等输入询问框");
+			Ui.AddRow(grid, "⑦ 插件", "ModuleManager 插件生命周期：载入 / 初始化 / 切换主页 / 卸载（含示例插件）");
 			content.Controls.Add(grid);
 
 			Ui.AddHeader(content, "快捷入口");
@@ -189,6 +192,7 @@ namespace WeiKit.Demo
 			Ui.AddRow(g2, "网络", "HttpLink.GetTask / PostTask / GetImageFromUrl / GetClientIP、DownTool、UploadTool、WebServer、DingDingAPI");
 			Ui.AddRow(g2, "控件", "Comp.Switch / Led / Chart / ProgressBar / ProgressRing / Panels");
 			Ui.AddRow(g2, "消息框", "WMessageBox.Show / ShowInfo / ShowSuccess / ShowWarning / ShowError / ShowQuestion / ShowDynamic / ShowImage / ShowToast / AskText / AskSwitch / AskNumber / AskDate / AskTime / AskDateTime / AskColor / AskFile / AskFolder / AskPath");
+			Ui.AddRow(g2, "插件", "Module_Interface / Module_Base / ModuleManager（LoadModule / InitializeAll / GoToMainPageAll / ExitModule / ExitAll）");
 			content.Controls.Add(g2);
 
 			Ui.AddHeader(content, "已知限制（仍建议遵守）");

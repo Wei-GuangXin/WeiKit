@@ -316,7 +316,12 @@ namespace WeiKit
 			ConfigChanged?.Invoke(this);// 触发配置更改事件
 			Console.WriteLine($"配置数据已设置为默认值。");
 		}
-
+		/// <summary>
+		/// 载入配置数据，自动判断是否加密。若指定了 SaveKey，则尝试解密载入；若未指定，则按明文载入。
+		/// </summary>
+		/// <param name="path"></param>
+		/// <param name="SaveKey"></param>
+		/// <returns></returns>
 		public bool Load(string path, string SaveKey = "")
 		{
 			Console.WriteLine($"正在载入配置数据->{path}");
@@ -670,6 +675,36 @@ namespace WeiKit
 				if (Copy(s.Name, Toconfigs)) count++;
 			return count;
 		}
-
+		/// <summary>
+		/// 通过指定的配置名称列表，创建一个新的配置对象，并将这些配置项从当前对象复制到新对象中。
+		/// </summary>
+		/// <param name="names"></param>
+		/// <returns></returns>
+		public Configs SeparationConfigs(string[] names)
+		{
+			Configs newConfigs = new Configs();
+			foreach (var name in names)
+			{
+				Copy(name, newConfigs);
+			}
+			return newConfigs;
+		}
+		/// <summary>
+		/// 将另一个配置对象的配置项合并到当前对象中，同名项整条覆盖，否则追加。
+		/// </summary>
+		/// <param name="otherConfigs"></param>
+		/// <returns></returns>
+		/// <exception cref="ArgumentNullException"></exception>
+		public bool MergeConfigs(Configs otherConfigs)
+		{
+			if (otherConfigs == null)
+				throw new ArgumentNullException(nameof(otherConfigs), "要合并的配置对象不能为空。");
+			int count = 0;
+			foreach (var s in otherConfigs.configs)
+			{
+				if (Copy(s.Name, this)) count++;
+			}
+			return count > 0;
+		}
 	}
 }
