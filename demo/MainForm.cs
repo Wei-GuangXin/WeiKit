@@ -102,6 +102,8 @@ namespace WeiKit.Demo
 
 			tabs.TabPages.Add(WrapTab("⑦ 插件", new ModuleDemo().Build()));
 
+			tabs.TabPages.Add(WrapTab("⑧ API 服务器", new ApiServerDemo().Build()));
+
 			tabs.TabPages.Add(BuildAboutTab());
 
 			Controls.Add(tabs);
@@ -142,6 +144,7 @@ namespace WeiKit.Demo
 			Ui.AddRow(grid, "⑤ 自绘控件", "Switch / Led / Chart / ProgressBar / ProgressRing / Panels 六个控件实时演示");
 			Ui.AddRow(grid, "⑥ 消息框", "WMessageBox 普通/动态/图片消息框、Toast 提示 + 文本/开关/数字/日期/颜色/文件等输入询问框");
 			Ui.AddRow(grid, "⑦ 插件", "ModuleManager 插件生命周期：载入 / 初始化 / 切换主页 / 卸载（含示例插件）");
+			Ui.AddRow(grid, "⑧ API 服务器", "HttpsApiServer：Token 认证 + 内置用户 + 登录接口 + UserName 二级鉴权");
 			content.Controls.Add(grid);
 
 			Ui.AddHeader(content, "快捷入口");
@@ -193,6 +196,7 @@ namespace WeiKit.Demo
 			Ui.AddRow(g2, "控件", "Comp.Switch / Led / Chart / ProgressBar / ProgressRing / Panels");
 			Ui.AddRow(g2, "消息框", "WMessageBox.Show / ShowInfo / ShowSuccess / ShowWarning / ShowError / ShowQuestion / ShowDynamic / ShowImage / ShowToast / AskText / AskSwitch / AskNumber / AskDate / AskTime / AskDateTime / AskColor / AskFile / AskFolder / AskPath");
 			Ui.AddRow(g2, "插件", "Module_Interface / Module_Base / ModuleManager（LoadModule / InitializeAll / GoToMainPageAll / ExitModule / ExitAll）");
+			Ui.AddRow(g2, "API 服务器", "HttpsApiServer（EnableTokenAuth / AddUser / EnableBuiltInLogin / AddApi / Open / Close）+ ApiRequest / ApiResponse");
 			content.Controls.Add(g2);
 
 			Ui.AddHeader(content, "已知限制（仍建议遵守）");

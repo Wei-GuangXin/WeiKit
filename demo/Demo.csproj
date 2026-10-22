@@ -66,6 +66,7 @@
     </Compile>
     <Compile Include="ModuleDemo.cs" />
     <Compile Include="SamplePlugin.cs" />
+    <Compile Include="ApiServerDemo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WeiKit.csproj">

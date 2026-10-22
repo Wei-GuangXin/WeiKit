@@ -41,6 +41,7 @@
 | `CryptoHelper` | AES 加解密、文件加密存储 |
 | `HttpLink` | HTTP 基础请求：GET/POST、图片下载、`DownTool` 下载器、`UploadTool` 上传器 |
 | `WebServer` | 基于 `HttpListener` 的内嵌 Web 服务（软页面 + 访问日志，含路径穿越防护） |
+| `HttpsApiServer` | 基于 `HttpListener` 的 HTTPS API 服务器（Token 认证 + 内置用户 + 登录接口 + UserName 二级鉴权） |
 | `DingDingAPI` | 钉钉自定义机器人消息推送（markdown） |
 | `SakuraFrpcAPI` | 樱花 Frp 内网穿透接口封装 |
 | `ProgTool` | 机器码生成、管理员运行/重启、编译时间、ClickOnce 卸载等 |

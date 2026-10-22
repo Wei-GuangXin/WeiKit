@@ -101,6 +101,7 @@
     <Compile Include="CryptoHelper.cs" />
     <Compile Include="DingDingAPI.cs" />
     <Compile Include="HttpLink.cs" />
+    <Compile Include="HttpsApiServer.cs" />
     <Compile Include="Info.cs" />
     <Compile Include="Logs.cs" />
     <Compile Include="Module_Interface.cs" />
