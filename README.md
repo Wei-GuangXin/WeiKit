@@ -6,6 +6,7 @@
 - 程序集：`WeiKit`（`WeiKit.dll`）
 - 作者：Wei Guang Xin
 - 主页：<https://www-home.rsie3cp43.nyat.app:37071/>
+- 详细文档：<https://wei-guangxin.github.io/WeiKit/WeiKit-light-%E6%96%87%E6%A1%A3.html>
 
 ---
 
