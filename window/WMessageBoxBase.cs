@@ -505,6 +505,7 @@ namespace WeiKit.Window
 		{
 			// 给窗体设置圆角，与库其它窗口保持一致
 			Tool.SetControlFillet(this, 8);
+			this.TopMost = true;
 			LayoutContent();
 		}
 
