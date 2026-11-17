@@ -117,6 +117,7 @@
     <Compile Include="States.cs" />
     <Compile Include="Tool.cs" />
     <Compile Include="WebServer.cs" />
+    <Compile Include="WeiKitClient.cs" />
     <Compile Include="Window\ConfigManag.cs">
       <SubType>Form</SubType>
     </Compile>

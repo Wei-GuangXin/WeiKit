@@ -33,6 +33,8 @@ namespace WeiKit
 		/// 前8位为日期，9~11位为版本类型&分隔符，后面的序列号代表同一天内的版本迭代次数。
 		/// 未显式赋值时自动生成：日期取程序集编译时间，版本类型由 Isrelease 决定（RLS / DEV），
 		/// 序列号取编译时刻的时分秒（HHmmss）；编译时间获取失败时显示「未知版本」。
+		/// 
+		/// 当前版本号仅用于辅助识别，更新检查以ReleaseVersion为主。
 		/// </summary>
 		public static string Version
 		{
@@ -61,5 +63,7 @@ namespace WeiKit
 				return "未知版本" + type;
 			return buildTime.ToString("yyyyMMdd") + type + buildTime.ToString("HHmmss");
 		}
+		//发行版本号，主要用于程序更新的版本号判断，格式遵循语义化版本号规范，形如：WeiKit.Release.v1.0.0
+		public const string ReleaseVersion = "WeiKit.Release.v1.1.0";
 	}
 }
