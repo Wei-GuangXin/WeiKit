@@ -287,6 +287,16 @@ td code{white-space:nowrap}
   <a href="#module-interface" class="sub">Module_Interface</a>
   <a href="#module-manager" class="sub">ModuleManager</a>
 
+  <div class="grp">服务器客户端</div>
+  <a href="#client">九、WeiKitClient</a>
+  <a href="#client-init" class="sub">初始化与底层请求</a>
+  <a href="#client-captcha" class="sub">验证码（文本 / 图片）</a>
+  <a href="#client-login" class="sub">登录与注册</a>
+  <a href="#client-account" class="sub">用户信息与密码</a>
+  <a href="#client-session" class="sub">本地登录态缓存</a>
+  <a href="#client-data" class="sub">数据托管与头像</a>
+  <a href="#client-plugin" class="sub">插件 / 更新 / 公告</a>
+
   <div class="grp">附录</div>
   <a href="#deps">依赖清单</a>
   <a href="#caveats">已知陷阱汇总</a>
@@ -374,6 +384,11 @@ td code{white-space:nowrap}
     <div class="n">附带</div>
     <h4>插件管理 <code>WeiKit.Modms</code></h4>
     <p>基于 <code>Module_Interface</code> / <code>ModuleManager</code> 的轻量级插件生命周期管理与配置注入。</p>
+  </div>
+  <div class="card">
+    <div class="n">附带</div>
+    <h4>服务器客户端 <code>WeiKitClient</code></h4>
+    <p>与 WeiKit Server 对齐的用户侧 API 客户端：密码 / 邮箱验证码登录、数据托管与同步、头像、插件、更新公告，以及绑定机器码与 IP 的本地登录态缓存。</p>
   </div>
 </div>
 
@@ -541,6 +556,7 @@ log.<span class="fn">ShowLogsForm</span>();                     <span class="cmt
 ├─ <span class="f">WMessageBox.cs</span>           <span class="c">消息框静态入口</span>
 ├─ <span class="f">Module_Interface.cs</span>      <span class="c">插件接口与基类（命名空间 WeiKit.Modms）</span>
 ├─ <span class="f">ModuleManager.cs</span>         <span class="c">插件生命周期管理器</span>
+├─ <span class="f">WeiKitClient.cs</span>         <span class="c">WeiKit Server 用户侧 API 客户端（命名空间 WeiKit.Client）</span>
 ├─ <span class="f">WeiKit.csproj</span> / <span class="f">WeiKit.sln</span>
 └─ <span class="f">packages.config</span>          <span class="c">Newtonsoft.Json / WebView2</span>
 </div>
@@ -2295,6 +2311,293 @@ mgr.<span class="fn">InitializeAll</span>();</pre></div>
 
 <hr>
 
+<h2 id="client">九、服务器客户端（<code>WeiKitClient</code>）</h2>
+
+<p class="sub">命名空间 <code>WeiKit.Client</code> · 类 <code>WeiKitClient</code>（实现 <code>IDisposable</code>） · 源码 <code>WeiKitClient.cs</code></p>
+
+<p>
+  <code>WeiKitClient</code> 是 <b>WeiKit Server 用户侧 API</b> 的同步客户端封装：统一处理 <code>{code,message,data}</code> 响应信封、
+  Bearer Token 鉴权、算术验证码、邮箱验证码登录、用户数据托管与增量同步、头像、插件下载、本体更新与公告，
+  以及「绑定机器码 + IP」的本地登录态缓存（自动登录）。
+</p>
+
+<table class="tight">
+  <tbody>
+    <tr><th>依赖</th><td><code>Newtonsoft.Json</code>；.NET Framework 4.7.2 需引用 <code>System.Net.Http</code>（.NET 8+ 已内置）</td></tr>
+    <tr><th>服务端地址</th><td>API 根地址（如 <code>https://api.example.com</code> 或 <code>http://127.0.0.1:8080</code>），不要带结尾 <code>/</code></td></tr>
+    <tr><th>可选鉴权</th><td>构造时传入 <code>apiServerKey</code>，非空时自动附加 <code>X-Api-Key</code> 请求头</td></tr>
+    <tr><th>超时</th><td><code>HttpClient.Timeout = 30 秒</code>；<code>User-Agent: WeiKit-Client/1.0</code></td></tr>
+    <tr><th>失败信息</th><td>所有返回 <code>bool</code> 的方法失败后读取 <code>LastError</code>；抛异常的方法直接抛 <code>InvalidOperationException</code></td></tr>
+  </tbody>
+</table>
+
+<div class="box info">
+  <b>与 WeiKit Server 的契约</b>
+  响应统一为 <code>{ "code":0, "message":"", "data":{...} }</code>，<code>code == 0</code> 视为成功；
+  字段统一 CamelCase，由 <code>Newtonsoft.Json</code> 直接映射到 DTO 的公共字段。
+</div>
+
+<h3 id="client-init">初始化与底层请求</h3>
+
+<div class="tbl">
+<table class="tight">
+  <thead><tr><th>成员</th><th>签名 / 类型</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>WeiKitClient</code></td><td><code>WeiKitClient(string apiServerUrl, string apiServerKey = "")</code></td><td>构造客户端；内部创建 <code>HttpClient</code></td></tr>
+    <tr><td><code>ApiServerUrl</code> / <code>ApiServerKey</code></td><td><code>string</code></td><td>服务端根地址 / 可选 API Key</td></tr>
+    <tr><td><code>Token</code> / <code>RefreshToken</code></td><td><code>string</code></td><td>当前登录令牌 / 刷新令牌</td></tr>
+    <tr><td><code>Name</code> / <code>UserId</code></td><td><code>string</code></td><td>当前登录用户名 / UID</td></tr>
+    <tr><td><code>IsEffective</code></td><td><code>bool</code></td><td>是否持有非空 Token</td></tr>
+    <tr><td><code>LastError</code></td><td><code>string</code></td><td>最近一次失败的原因</td></tr>
+    <tr><td><code>ServerTwoFactorEnabled</code></td><td><code>bool</code></td><td>服务端是否启用邮箱验证（<code>GetMe()</code> 时同步）</td></tr>
+    <tr><td><code>SendRequest</code> / <code>SendRequestAsync</code></td><td><code>string</code></td><td>返回原始响应 JSON；自动附加 Token / ApiKey / Content-Type</td></tr>
+    <tr><td><code>Request</code></td><td><code>ApiEnvelope</code></td><td>发送并解析为信封（<code>code/message/data</code>，<code>Ok</code>、<code>DataObj</code>、<code>DataArr</code>）</td></tr>
+    <tr><td><code>RequestObject</code></td><td><code>ApiEnvelope</code></td><td>把对象序列化为 JSON 后请求，最常用</td></tr>
+    <tr><td><code>GetUserCenterUrl</code></td><td><code>string</code></td><td>生成带 <code>#token=</code> 的用户中心免登录链接；参数传用户中心根地址（如 <code>https://file.xxx:60721/user</code>）</td></tr>
+    <tr><td><code>OpenUserCenterInBrowser</code></td><td><code>void</code></td><td>用系统默认浏览器打开用户中心；参数传文件服务器根地址（如 <code>https://file.xxx:60721</code>），内部自动补 <code>/user</code></td></tr>
+    <tr><td><code>Dispose</code></td><td><code>void</code></td><td>释放内部 <code>HttpClient</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="codewrap"><span class="lang">csharp</span><button class="copy">复制</button><pre><span class="kw">using</span> <span class="type">WeiKit.Client</span>;
+
+<span class="kw">using</span> (<span class="kw">var</span> client = <span class="kw">new</span> <span class="type">WeiKitClient</span>(<span class="str">"https://api.example.com"</span>))
+{
+    <span class="cmt">// 需要时手动指定 API Key（服务端开启 X-Api-Key 校验时）</span>
+    <span class="cmt">// var client = new WeiKitClient("https://api.example.com", "your-api-key");</span>
+
+    <span class="kw">var</span> cap = client.<span class="fn">GetCaptcha</span>();          <span class="cmt">// 文本模式：cap.expression = "3 + 4"</span>
+    Console.<span class="fn">WriteLine</span>(cap.expression);
+
+    <span class="kw">if</span> (!client.<span class="fn">Login</span>(<span class="str">"alice"</span>, <span class="str">"password"</span>, <span class="str">"7"</span>))   <span class="cmt">// 第三个参数为算式答案</span>
+        Console.<span class="fn">WriteLine</span>(<span class="str">"登录失败: "</span> + client.LastError);
+}</pre></div>
+
+<div class="box warn">
+  <b>同步调用会阻塞</b>
+  所有方法都是同步封装（内部 <code>GetAwaiter().GetResult()</code>）。请在后台线程 / <code>Task.Run</code> 中调用，
+  不要直接卡住 WinForms UI 线程；30 秒超时期间界面会无响应。
+</div>
+
+<h3 id="client-captcha">验证码（文本 / 图片）</h3>
+
+<div class="tbl">
+<table class="tight">
+  <thead><tr><th>成员</th><th>签名</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>GetCaptcha</code></td><td><code>CaptchaInfo GetCaptcha()</code></td><td><b>文本模式</b>：返回 <code>expression</code>（如 <code>"12 * 3"</code>），程序可自动计算，用于无人值守登录</td></tr>
+    <tr><td><code>GetCaptchaImage</code></td><td><code>CaptchaInfo GetCaptchaImage()</code></td><td><b>图片模式</b>：返回 <code>image</code>（<code>data:image/png;base64,...</code>），不返回算式明文，适合展示给用户</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><code>CaptchaInfo</code> 字段：<code>captchaId</code>、<code>expression</code>（图片模式为 <code>null</code>）、<code>image</code>（文本模式为 <code>null</code>）、<code>ttl</code>。
+两种方式都会缓存 <code>captchaId</code>，随后调用 <code>Login</code> / <code>LoginByEmail</code> 并传入用户算出的答案即可复用。</p>
+
+<div class="codewrap"><span class="lang">csharp</span><button class="copy">复制</button><pre><span class="cmt">// WinForms：把服务端验证码图片显示到 PictureBox</span>
+<span class="kw">var</span> cap = client.<span class="fn">GetCaptchaImage</span>();
+<span class="kw">string</span> b64 = cap.image.<span class="fn">Substring</span>(cap.image.<span class="fn">IndexOf</span>(<span class="str">','</span>) + <span class="num">1</span>);
+<span class="kw">using</span> (<span class="kw">var</span> ms = <span class="kw">new</span> <span class="type">MemoryStream</span>(<span class="type">Convert</span>.<span class="fn">FromBase64String</span>(b64)))
+{
+    pictureBox1.Image = <span class="type">Image</span>.<span class="fn">FromStream</span>(ms);
+}
+
+<span class="cmt">// 用户输入答案后提交（复用上面缓存的 captchaId）</span>
+client.<span class="fn">Login</span>(<span class="str">"alice"</span>, <span class="str">"password"</span>, textBoxCaptcha.Text.<span class="fn">Trim</span>());</pre></div>
+
+<div class="box info">
+  <b>自动算题</b>
+  <code>Login</code> / <code>LoginByEmail</code> 的验证码参数留空时，内部会自动调用 <code>GetCaptcha()</code> 并计算算式结果，
+  适用于服务端可信的自动化场景；面向最终用户的界面应使用 <code>GetCaptchaImage()</code>。
+</div>
+
+<h3 id="client-login">登录与注册</h3>
+
+<div class="tbl">
+<table class="tight">
+  <thead><tr><th>成员</th><th>签名</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>Login</code></td><td><code>bool Login(string name, string password, string verificationcode = "")</code></td><td>用户名 + 密码登录；成功自动填充 <code>Token</code>/<code>RefreshToken</code>/<code>Name</code>/<code>UserId</code></td></tr>
+    <tr><td><code>LoginByEmail</code></td><td><code>bool LoginByEmail(string email, string emailCode, string verificationcode = "")</code></td><td>邮箱验证码登录（服务端启用邮箱验证时可用）</td></tr>
+    <tr><td><code>Register</code></td><td><code>(bool ok, string message) Register(string username, string password, string email = "", string phone = "", string nickname = "", string captchaId = "", string captcha = "", string emailCode = "")</code></td><td>注册，<b>必须绑定邮箱</b>；成功后自动填充 Token 与身份</td></tr>
+    <tr><td><code>ResetPassword</code></td><td><code>(bool ok, string message) ResetPassword(string username, string newPassword, string captchaId, string captcha, string emailCode = "")</code></td><td>忘记密码重置（按服务端配置决定是否需要邮箱验证码）</td></tr>
+    <tr><td><code>SendEmailCode</code></td><td><code>bool SendEmailCode(string email, string purpose = "register")</code></td><td>发送邮箱验证码；返回<b>服务端是否真正投递成功</b>（SMTP 失败为 <code>false</code>）</td></tr>
+    <tr><td><code>Logout</code></td><td><code>bool Logout()</code></td><td>通知服务端吊销当前 Token，并清空本地 Token</td></tr>
+    <tr><td><code>Refresh</code></td><td><code>bool Refresh()</code></td><td>用 <code>RefreshToken</code> 换取新 Token</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><code>purpose</code> 取值：<code>register</code>（注册，始终可用）、<code>login</code>（邮箱登录）、<code>reset</code>（重置密码）、
+<code>changepassword</code>（修改密码）、<code>deluser</code>（注销账号）。除 <code>register</code> 外均要求服务端启用邮箱验证（2FA/SMTP）。</p>
+
+<div class="codewrap"><span class="lang">csharp</span><button class="copy">复制</button><pre><span class="cmt">// 邮箱验证码登录：先发码，再登录</span>
+<span class="kw">if</span> (!client.<span class="fn">SendEmailCode</span>(<span class="str">"alice@example.com"</span>, <span class="str">"login"</span>))
+    Console.<span class="fn">WriteLine</span>(<span class="str">"邮件发送失败，请检查服务端 SMTP 配置"</span>);
+
+<span class="cmt">// code 为用户在邮箱中收到的验证码；验证码答案留空则自动算题</span>
+<span class="kw">if</span> (!client.<span class="fn">LoginByEmail</span>(<span class="str">"alice@example.com"</span>, code))
+    Console.<span class="fn">WriteLine</span>(client.LastError);
+
+<span class="cmt">// 注册（需先取验证码；服务端启用邮箱验证时还需 emailCode）</span>
+<span class="kw">var</span> cap = client.<span class="fn">GetCaptcha</span>();
+<span class="kw">var</span> (ok, msg) = client.<span class="fn">Register</span>(
+    <span class="str">"alice"</span>, <span class="str">"password123"</span>, <span class="str">"alice@example.com"</span>,
+    captchaId: cap.captchaId, captcha: <span class="str">"7"</span>);</pre></div>
+
+<div class="box warn">
+  <b>邮箱相关前置条件</b>
+  <ul>
+    <li>邮箱登录要求服务端启用邮箱验证且 SMTP 可用；未启用时接口返回「服务端未启用邮箱验证登录」。</li>
+    <li>账号必须已绑定邮箱；注册已强制校验邮箱格式，且同一邮箱不能重复绑定。</li>
+    <li><code>SendEmailCode</code> 返回 <code>true</code> 仅代表邮件真正投递成功，不再把「接口调用成功」误判为发送成功。</li>
+  </ul>
+</div>
+
+<h3 id="client-account">用户信息与密码</h3>
+
+<div class="tbl">
+<table class="tight">
+  <thead><tr><th>成员</th><th>签名</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>GetMe</code></td><td><code>UserInfo GetMe()</code></td><td>获取当前用户信息，同时把服务端顶层 <code>twoFactorEnabled</code> 同步到 <code>ServerTwoFactorEnabled</code></td></tr>
+    <tr><td><code>ChangePassword</code></td><td><code>(bool ok, string message) ChangePassword(string oldPassword, string newPassword, string emailCode = "")</code></td><td>原密码与邮箱验证码<b>二选一</b>：只传其一即可，两个都传时任一通过即可</td></tr>
+    <tr><td><code>ChangePasswordByEmailCode</code></td><td><code>(bool ok, string message) ChangePasswordByEmailCode(string emailCode, string newPassword)</code></td><td>仅用邮箱验证码修改密码的便捷重载</td></tr>
+    <tr><td><code>DeleteAccount</code></td><td><code>(bool ok, string message) DeleteAccount(string emailCode = "")</code></td><td>注销账号（服务端启用邮箱验证时需传验证码）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="codewrap"><span class="lang">csharp</span><button class="copy">复制</button><pre><span class="cmt">// 方式一：原密码</span>
+client.<span class="fn">ChangePassword</span>(<span class="str">"old-password"</span>, <span class="str">"new-password-123"</span>);
+
+<span class="cmt">// 方式二：邮箱验证码（先发送 changepassword 用途的验证码）</span>
+client.<span class="fn">SendEmailCode</span>(<span class="str">"alice@example.com"</span>, <span class="str">"changepassword"</span>);
+client.<span class="fn">ChangePasswordByEmailCode</span>(codeFromMail, <span class="str">"new-password-123"</span>);</pre></div>
+
+<div class="box warn">
+  <b>修改密码会强制下线</b>
+  服务端成功修改密码后会吊销该用户的全部会话；客户端会同步清空 <code>Token</code> / <code>RefreshToken</code>，
+  调用方应引导用户重新登录（本地登录态缓存也会随之失效）。
+</div>
+
+<h3 id="client-session">本地登录态缓存（自动登录）</h3>
+
+<p>
+  登录成功后，可把「Token + 刷新令牌 + 用户身份 + 用户数据快照」加密写入本地文件，下次启动直接恢复登录态。
+  缓存文件使用 <b>PBKDF2-SHA256（100000 次）+ AES-256-CBC + HMAC-SHA256（Encrypt-then-MAC）</b>，
+  文件头魔数 <code>WKITBAK1</code>；同时绑定<b>机器码</b>与<b>登录 IP</b>，换机或换网络后无法复用。
+</p>
+
+<div class="tbl">
+<table class="tight">
+  <thead><tr><th>成员</th><th>签名</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>VerifyToken</code></td><td><code>bool VerifyToken()</code></td><td>调用 <code>/users/me</code> 校验当前 Token；网络异常也返回 <code>false</code></td></tr>
+    <tr><td><code>ExportLocalData</code></td><td><code>void ExportLocalData(string filePath, string password)</code></td><td>登录后调用：写入加密缓存（含 <code>ExportAllData()</code> 的全量用户数据）</td></tr>
+    <tr><td><code>ImportLocalData</code></td><td><code>void ImportLocalData(string filePath, string password)</code></td><td>恢复登录态；机器码不匹配、Token 失效、IP 不匹配时抛 <code>InvalidOperationException</code></td></tr>
+    <tr><td><code>TryImportLocalData</code></td><td><code>bool TryImportLocalData(string filePath, string password)</code></td><td>安全版本：失败返回 <code>false</code>，原因写入 <code>LastError</code></td></tr>
+    <tr><td><code>CachedData</code></td><td><code>List&lt;DataMeta&gt;</code></td><td>导入成功后恢复的用户数据快照</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="codewrap"><span class="lang">csharp</span><button class="copy">复制</button><pre><span class="kw">const string</span> SessionFile = <span class="str">@"cache\alice.wksession"</span>;
+<span class="kw">const string</span> SessionKey  = <span class="str">"local-encryption-password"</span>;
+
+<span class="cmt">// 启动时尝试自动登录</span>
+<span class="kw">var</span> client = <span class="kw">new</span> <span class="type">WeiKitClient</span>(<span class="str">"https://api.example.com"</span>);
+<span class="kw">if</span> (client.<span class="fn">TryImportLocalData</span>(SessionFile, SessionKey))
+{
+    Console.<span class="fn">WriteLine</span>(<span class="str">"自动登录成功: "</span> + client.Name);
+}
+<span class="kw">else</span>
+{
+    Console.<span class="fn">WriteLine</span>(<span class="str">"需要重新登录: "</span> + client.LastError);
+}
+
+<span class="cmt">// 登录成功后写入缓存</span>
+<span class="kw">if</span> (client.<span class="fn">Login</span>(<span class="str">"alice"</span>, <span class="str">"password"</span>))
+    client.<span class="fn">ExportLocalData</span>(SessionFile, SessionKey);</pre></div>
+
+<div class="box warn">
+  <b>自动登录的失效条件</b>
+  <ul>
+    <li><b>机器码</b>取 <code>机器名 | OS 版本 | 处理器数量 | 系统目录</code> 的 SHA256 前 32 位；换机、重装系统、修改机器名都会失效。</li>
+    <li><b>IP 绑定</b>使用登录时的服务端出口 IP；公网 IP 变化（宽带重播、切网络、代理）会失效。</li>
+    <li>Token 过期后导入失败；导入流程不会自动使用 <code>RefreshToken</code>，需要时自行调用 <code>Refresh()</code>。</li>
+    <li>缓存文件解密密码由调用方保管；遗忘后文件无法恢复。</li>
+  </ul>
+</div>
+
+<h3 id="client-data">数据托管与头像</h3>
+
+<div class="tbl">
+<table class="tight">
+  <thead><tr><th>成员</th><th>签名</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>GetData</code></td><td><code>DataMeta GetData(string key)</code></td><td>读取一条数据（<code>key/value/contentType/version/updatedAt</code>）</td></tr>
+    <tr><td><code>WriteData</code></td><td><code>(long version, int size, string message) WriteData(string key, string value, string contentType = "text/plain")</code></td><td>写入 / 覆盖一条数据，返回新版本号与字节数</td></tr>
+    <tr><td><code>DeleteData</code></td><td><code>bool DeleteData(string key)</code></td><td>删除一条数据</td></tr>
+    <tr><td><code>Sync</code></td><td><code>SyncResult Sync(Dictionary&lt;string, long&gt; knownVersions = null)</code></td><td>增量同步：返回全量元信息 <code>Items</code> 与变化项 <code>Changed</code>；传 <code>null</code> 等价于全量</td></tr>
+    <tr><td><code>ExportAllData</code></td><td><code>List&lt;DataMeta&gt; ExportAllData()</code></td><td>导出全部数据正文</td></tr>
+    <tr><td><code>GetAvatarKey</code></td><td><code>string GetAvatarKey()</code></td><td>当前用户头像的数据键（服务端 <code>avatarKey</code>，空值回退 <code>"avatar"</code>）</td></tr>
+    <tr><td><code>GetAvatarBase64</code> / <code>TryGetAvatarBytes</code></td><td><code>string</code> / <code>bool(out byte[])</code></td><td>读取头像（未设置时返回 <code>null</code> / <code>false</code>）</td></tr>
+    <tr><td><code>SetAvatarBase64</code> / <code>SetAvatarBytes</code> / <code>SetAvatarFromFile</code></td><td><code>(long version, int size, string message)</code></td><td>上传头像（写入数据键 <code>"avatar"</code>，默认 <code>image/png</code>）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="codewrap"><span class="lang">csharp</span><button class="copy">复制</button><pre><span class="cmt">// 增量同步：只需传上次拿到的版本号</span>
+<span class="kw">var</span> known = <span class="kw">new</span> <span class="type">Dictionary</span>&lt;<span class="kw">string</span>, <span class="kw">long</span>&gt; { [<span class="str">"settings"</span>] = <span class="num">12</span> };
+<span class="kw">var</span> sync = client.<span class="fn">Sync</span>(known);
+<span class="kw">foreach</span> (<span class="kw">var</span> item <span class="kw">in</span> sync.Changed)
+    Console.<span class="fn">WriteLine</span>(<span class="str">$"{item.key} => {item.value}"</span>);
+
+<span class="cmt">// 头像</span>
+<span class="kw">if</span> (client.<span class="fn">TryGetAvatarBytes</span>(<span class="kw">out var</span> avatar))
+    pictureBoxAvatar.Image = <span class="type">Image</span>.<span class="fn">FromStream</span>(<span class="kw">new</span> <span class="type">MemoryStream</span>(avatar));
+client.<span class="fn">SetAvatarFromFile</span>(<span class="str">@"C:\avatar.png"</span>);</pre></div>
+
+<h3 id="client-plugin">插件 / 更新 / 公告</h3>
+
+<div class="tbl">
+<table class="tight">
+  <thead><tr><th>成员</th><th>签名</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>ListPlugins</code></td><td><code>List&lt;PluginBrief&gt; ListPlugins()</code></td><td>全部已发布插件</td></tr>
+    <tr><td><code>GetPlugin</code> / <code>GetPluginVersions</code></td><td><code>PluginInfo</code> / <code>List&lt;PluginVersionInfo&gt;</code></td><td>插件详情（含版本列表）/ 版本列表</td></tr>
+    <tr><td><code>GetLatestDownload</code> / <code>GetVersionDownload</code></td><td><code>PluginVersionInfo</code></td><td>最新版本 / 指定版本的下载地址、大小与 SHA256</td></tr>
+    <tr><td><code>GetLatestVersion</code> / <code>GetVersionList</code></td><td><code>JObject</code> / <code>JArray</code></td><td>本体最新版本 / 全部版本（GitHub 源）</td></tr>
+    <tr><td><code>CheckUpdate</code></td><td><code>UpdateCheckResult CheckUpdate(string currentVersion)</code></td><td>检查更新（含强制更新判断与公告合并）</td></tr>
+    <tr><td><code>GetNotice</code></td><td><code>NoticeResult GetNotice()</code></td><td>获取公告（服务端公告 + GitHub notice）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  <code>AnnouncementInfo</code> 现包含 <code>images</code> 字段（<code>List&lt;string&gt;</code>），服务端直接把公告图片地址以数组返回，
+  <b>客户端无需解析 Markdown</b>；同时保留 <code>content</code>，便于自行渲染正文。
+</p>
+
+<div class="codewrap"><span class="lang">csharp</span><button class="copy">复制</button><pre><span class="kw">var</span> notice = client.<span class="fn">GetNotice</span>();
+<span class="kw">foreach</span> (<span class="kw">var</span> a <span class="kw">in</span> notice.announcements)
+{
+    Console.<span class="fn">WriteLine</span>(<span class="str">$"[{a.pinned ? "置顶" : "普通"}] {a.title}"</span>);
+    <span class="kw">foreach</span> (<span class="kw">var</span> url <span class="kw">in</span> a.images ?? <span class="kw">new</span> <span class="type">List</span>&lt;<span class="kw">string</span>&gt;())
+        Console.<span class="fn">WriteLine</span>(<span class="str">"  图片: "</span> + url);
+}</pre></div>
+
+<div class="box warn">
+  <b>公告图片地址</b>
+  图片地址通常形如 <code>/announcement/xxx.png</code>，是相对于<b>文件服务器</b>的路径，
+  不是 API 服务器地址。显示前需拼接文件服务器根地址（例如 <code>https://file.example.com:60721</code> + <code>/announcement/xxx.png</code>）；
+  以 <code>http(s)://</code> 开头的地址则可直接使用。
+</div>
+
+<hr>
+
 <h2 id="deps">附录 A · 依赖清单</h2>
 
 <table>
@@ -2304,7 +2607,7 @@ mgr.<span class="fn">InitializeAll</span>();</pre></div>
     <tr><td><code>Microsoft.Web.WebView2</code></td><td>1.0.3650.58</td><td><code>Logsinfo</code> 日志窗口渲染 HTML</td><td>用日志窗口时必需</td></tr>
     <tr><td><code>System.Management</code></td><td>框架程序集</td><td><code>ProgTool.GenerateMachineCode</code> 的 WMI 查询</td><td>用机器码时必需</td></tr>
     <tr><td><code>System.Drawing</code> / <code>System.Windows.Forms</code></td><td>框架程序集</td><td>全部窗口与控件</td><td>必需</td></tr>
-    <tr><td><code>System.Net.Http</code></td><td>框架程序集</td><td><code>HttpLink</code>、<code>DingDingAPI</code>、<code>WebServer.StopServer</code></td><td>必需</td></tr>
+    <tr><td><code>System.Net.Http</code></td><td>框架程序集</td><td><code>HttpLink</code>、<code>DingDingAPI</code>、<code>WebServer.StopServer</code>、<code>WeiKitClient</code></td><td>必需</td></tr>
   </tbody>
 </table>
 
